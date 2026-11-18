@@ -14,9 +14,13 @@ Lee primero `.claude/skills/broll-director/SKILL.md` para las cinco familias y
 
 1. **Lee el brief.** Si no trae el *por qué* del plano, pídelo: sin eso no puedes juzgar
    si un candidato sirve.
-2. **Busca.** Bancos con licencia permisiva primero (Pexels, Unsplash, Artgrid). Para
-   archivo real, comprueba la licencia antes de proponerlo.
-3. **Evalúa contra el brief**, no contra tu gusto. ¿Dice lo que la palabra necesita decir?
+2. **Genera el plano.** Es la vía por defecto, no el último recurso. Parte de
+   `presets/broll-prompts.json`: cambia el sujeto y conserva la gramática fotográfica.
+   Para archivo real de un hecho concreto NO generes — eso sería fabricar un documento
+   falso; consigue licencia o sustituye por el hecho equivalente del tema propio.
+3. **Míralo y evalúalo contra el brief**, no contra tu gusto. ¿Dice lo que la palabra
+   necesita decir? Si falla, nombra qué falla con precisión y regenera con esa corrección
+   escrita en el prompt. No aceptes la primera salida a ciegas.
 4. **Comprueba el movimiento** antes de aceptarlo:
    ```bash
    python3 tools/motion_probe.py candidato.mp4
@@ -34,5 +38,8 @@ Lee primero `.claude/skills/broll-director/SKILL.md` para las cinco familias y
 
 ## Lo que devuelves
 
-La ruta del clip, su duración, de dónde salió, bajo qué licencia, y qué dijo
+La **ruta del archivo que existe**, su duración, de dónde salió (generado con qué prompt,
+o banco y licencia), cuántas iteraciones hiciste y qué corregiste en cada una, y qué dijo
 `motion_probe`. Si no lo conseguiste, qué falló y qué propones.
+
+Un brief sin archivo no es un entregable.

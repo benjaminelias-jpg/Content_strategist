@@ -26,23 +26,46 @@ no significa nada resta.
 Una pieza de 60–90 s usa las cinco. Si todas tus imágenes son de la misma familia, la
 pieza se aplana.
 
-## De dónde sale cada cosa
+## Genera el plano. No escribas un brief y lo dejes ahí.
 
-**Archivo real.** Es lo que más convence y lo único que **no se puede clonar**: el
-material de la referencia es suyo. Sustitúyelo por el equivalente de tu tema. Si es prensa
-o material con derechos, hace falta licencia — no lo metas en una pieza comercial sin
-ella, y si no la hay, dilo y propón alternativa.
+**Esta es la regla que más cambia el resultado.** Tienes herramientas de generación de
+imagen y vídeo: úsalas. Un brief sin imagen no es un entregable, y un gráfico vectorial
+hecho a mano no se parece en nada al material real de la referencia.
 
-**Capturas.** Grábalas tú. Es lo más barato y lo más creíble. Detalle que importa: en la
-referencia se ve el cursor seleccionando texto. Eso vende que es real. No lo limpies.
+Los prompts que **ya funcionaron** están en `presets/broll-prompts.json`, con la gramática
+fotográfica común y el registro de qué falló en cada primera versión. Para un tema nuevo
+se cambia el **sujeto** y se conserva esa gramática: encuadre, óptica, luz, paleta,
+profundidad de campo y las negaciones. Eso es lo que hace que los planos pertenezcan a la
+misma pieza.
 
-**Macro y textura.** Bancos con licencia permisiva (Pexels, Unsplash, Artgrid) o
-generación. Son planos sin cara, fáciles de sustituir.
+### El bucle, que no es opcional
 
-**Humano a escala.** Banco o rodaje propio. Cuidado con los bancos: una cara reconocible
-de stock se nota.
+1. Escribe el prompt con la gramática común y tu sujeto.
+2. Genera (`images_generate`, modo auto; `video_generate` si el plano debe moverse).
+3. **Mira el resultado.** No lo aceptes sin verlo.
+4. Si falla, **nombra qué falla con precisión** y vuelve a generar con esa corrección
+   dentro del prompt. "Mejóralo" no sirve. Sirve: *"salió descentrado, con teclado en
+   cuadro y la habitación demasiado iluminada"* → se añade `camera dead-on and centered`,
+   `no keyboard visible in frame`, `the room behind is almost entirely black`.
+5. Descarga y normaliza a 1080×1920.
+6. Comprueba el movimiento con `tools/motion_probe.py` antes de montarlo.
 
-**Objeto de época.** Generación o banco.
+Las negaciones son obligatorias en todo prompt: `no text, no logos, no readable brand
+names`. Los modelos inventan rótulos y marcas, y un rótulo inventado arruina el plano y
+mete un problema de derechos.
+
+## Lo que NO se genera
+
+| | por qué |
+|---|---|
+| **archivo real** | Un hecho concreto — una foto de equipo, una entrevista, un tuit — **no se genera**: eso sería fabricar un documento falso. O se consigue con licencia, o se sustituye por el hecho equivalente de tu tema. |
+| **capturas de pantalla** | Se graban. Lo más barato y lo más creíble. En la referencia se ve el cursor seleccionando texto: eso vende que es real, no lo limpies. |
+| **el presentador** | Se rueda. La referencia incluso se disfraza de un alter ego para romper el A-roll sin salir del set, y eso no cuesta nada. |
+
+Para lo demás —macro, textura, objeto de época, abstracción gráfica, humano a escala— la
+generación es la vía por defecto: sale a medida, sin problema de licencia y con la misma
+gramática en todos los planos. Los bancos (Pexels, Unsplash, Artgrid) quedan como
+alternativa cuando quieras material fotográfico real y no generado.
 
 ## Cómo se escribe un brief
 
@@ -92,6 +115,8 @@ coincide con un golpe musical: no montes al compás.
 
 - [ ] ¿Cada b-roll entra sobre una palabra concreta?
 - [ ] ¿Aparecen al menos tres familias distintas?
-- [ ] ¿Todo el material tiene licencia o es propio?
+- [ ] ¿**Existe el archivo** de cada plano, o sigue siendo un brief sin imagen?
+- [ ] ¿Miraste cada generación, o aceptaste la primera a ciegas?
+- [ ] ¿Todo el material tiene licencia, es generado o es propio?
 - [ ] ¿Los cortes caen en frontera de palabra?
 - [ ] ¿Hay algún plano que esté sólo por rellenar? Quítalo y alarga el anterior.
