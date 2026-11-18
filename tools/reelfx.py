@@ -146,9 +146,10 @@ def ef_invert_flash(src: str, dst: str, at: float, frames: int = 6,
     Se aplica con `negate` activado por ventana temporal, asi que afecta
     tambien al texto ya quemado: es justo como lo hace la referencia.
     """
-    t0 = at
-    t1 = at + frames / FPS
-    vf = f"negate=enable='between(t,{t0:.4f},{t1:.4f})'"
+    # Se activa por numero de frame, no por tiempo: between(t,a,b) es
+    # inclusivo en los dos extremos y deja 7 frames cuando pides 6.
+    n0 = int(round(at * FPS))
+    vf = f"negate=enable='between(n,{n0},{n0 + frames - 1})'"
     run(["ffmpeg", "-y", "-i", src, "-vf", vf,
          "-c:v", "libx264", "-crf", "16", "-preset", "medium",
          "-pix_fmt", "yuv420p", "-c:a", "copy", dst], dry)
