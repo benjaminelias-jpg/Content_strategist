@@ -130,6 +130,39 @@ volver a subir.
 ### 5.5 Corte seco
 El 90 % restante. Sin nada.
 
+### 5.6 El orden de capas no es el mismo para todos los efectos
+Dos efectos se comportan al revés y conviene no confundirlos:
+
+- El **flash en negativo** va **por encima del texto**: en 5.74–5.94 s los subtítulos se
+  invierten con la imagen. Es una capa de ajuste sobre todo el compuesto.
+- La **transición de 29.96 s** va **por debajo del texto**: el subtítulo "generadas" se
+  mantiene nítido mientras la imagen se degrada.
+
+Si inviertes sólo el clip, o degradas también el texto, ninguno de los dos se parece.
+
+### 5.7 El cambio de personaje (29.96 s) — receta no determinada
+A los 29.96 s el presentador se transforma en un **alter ego disfrazado** (peluca blanca
+de tazón, gafas de sol, bigote, auriculares) sentado en el mismo sofá. Es rodaje propio
+interpretando un personaje, no b-roll.
+
+El corte se escapa al umbral 0.25 y sólo aparece bajando a 0.10, porque la sala y el
+encuadre no cambian. La transición ocupa 2 frames.
+
+**No pude determinar la receta exacta**, y conviene decirlo en vez de inventarla. Lo
+medido:
+
+- no es mosaico: el error de reconstrucción crece de forma monótona con el tamaño de
+  bloque, sin mínimo en ninguno — si hubiera una rejilla de píxeles, habría un mínimo claro
+- no es un fundido lineal limpio: el mejor alfa es **0.25 en los dos frames**, cuando un
+  fundido debería rampar (0.33 → 0.67), y el error residual sigue siendo de ~10 niveles
+- lo "blocoso" que se ve a simple vista es compatible con **macrobloqueo del códec**: la
+  copia analizada va a 750 kbps y una transición de 2 frames entre dos imágenes muy
+  distintas es justo lo que peor encaja un encoder
+
+Para reproducirlo, lo más cercano del toolkit es `whip` con fuerza baja: mezcla las dos
+tomas y las ablanda, que es lo que se observa. Sobre un máster sin comprimir se podría
+medir bien; sobre esta copia, no.
+
 ---
 
 ## 6. Pixelado y tele vieja
@@ -176,6 +209,7 @@ Reparto aproximado: **55 % A-roll, 45 % b-roll.**
 | macro / textura | hoja, reloj, ojo con código reflejado | metáfora para conceptos que no tienen imagen |
 | humano a escala | figura ante un lago, mujer caminando por un sendero | puerta emocional antes del remate |
 | objeto de época | Macintosh clásico con CRT | sitúa la pieza en el tiempo desde el primer frame |
+| **el propio autor como personaje** | el alter ego disfrazado de 29.96 s | rompe el A-roll sin salir del set, y no cuesta nada: es él mismo |
 
 **La regla de oro:** cada b-roll entra sobre **una palabra concreta**, no sobre una frase.
 Si la palabra no tiene imagen, va tarjeta blanca.
@@ -218,8 +252,9 @@ corte sí son exactos.
 | 5.74 | **flash en negativo** | — |
 | 5.94 | ojo con código | está cambiando **todo** |
 | 7.21 | carretera cenital | en redes sociales |
-| 8.01 | ciudad barrida | cada día |
-| 8.41 | reloj | estamos viviendo |
+| 8.01 | semitono de puntos ámbar | cada día |
+| 8.41 | ciudad barrida | — |
+| 8.94 | reloj antiguo, marca "FESTA" | estamos viviendo |
 | 10.28 | A-roll | sin precedentes |
 | 12.48 | foto equipo OpenAI | NOVIEMBRE 2022. |
 | 13.55 | **zoom + blur** | — |
@@ -234,7 +269,8 @@ corte sí son exactos.
 | 26.09 | texto desenfocado | escribe guiones |
 | 26.76 | diseño sobre papel | diseña |
 | 27.36 | A-roll | incluso · personas |
-| 28.36 | A-roll | creando contenido |
+| 28.36 | A-roll | creando contenido · generadas |
+| 29.96 | **transición blanda de 2f** → alter ego disfrazado | inteligencia |
 | 32.53 | **whip blur** | — |
 | 32.60 | A-roll | y ojo · pero esto generó un **nuevo** problema |
 | 35.87 | interior acristalado | el hacer cualquier |
@@ -264,3 +300,6 @@ Las hojas de contacto y las tiras frame a frame que sostienen todo esto están e
 - `strip_invert2.png` — el whip blur de 2 frames
 - `broll.png` — las familias de b-roll
 - `endcard.png` — el cierre
+- `broll_catalogo.png` — los 21 planos de b-roll, etiquetados P00–P20
+- `cut30.png` — el cambio de personaje de 29.96 s, frame a frame
+- `pixelcut.png` — los 2 frames de esa transición, a resolución completa
