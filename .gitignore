@@ -1,0 +1,5 @@
+assets/cache/
+out/
+*.mov
+*.mp4
+!docs/evidencia/*
