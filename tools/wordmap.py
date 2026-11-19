@@ -19,6 +19,7 @@ import argparse
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 AYUDA_INSTALACION = """
@@ -39,6 +40,16 @@ las palabras que llevan enfasis, porque son las que se ven.
 """
 
 
+def _onda_16k(audio: str):
+    """Decodifica cualquier audio a mono 16 kHz float32 con ffmpeg."""
+    import numpy as np
+    crudo = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", audio,
+         "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "1", "-ar", "16000", "-"],
+        check=True, stdout=subprocess.PIPE).stdout
+    return np.frombuffer(crudo, dtype=np.float32)
+
+
 def por_whisper(audio: str, modelo: str, idioma: str | None):
     try:
         from faster_whisper import WhisperModel
@@ -51,7 +62,13 @@ def por_whisper(audio: str, modelo: str, idioma: str | None):
         return _openai_whisper(audio, modelo, idioma)
 
     m = WhisperModel(modelo, device="cpu", compute_type="int8")
-    segs, _ = m.transcribe(audio, language=idioma, word_timestamps=True)
+    # Se le pasa la onda ya decodificada, no la ruta. Si se le da la ruta,
+    # faster-whisper decodifica con PyAV, y esa pareja se rompe cada poco:
+    # con PyAV >= 16 el av.open(metadata_errors=...) que usa ya no existe y
+    # revienta con TypeError. ffmpeg ya es dependencia del proyecto, asi que
+    # decodificamos aqui a 16 kHz mono float32, que es lo que espera el modelo.
+    segs, _ = m.transcribe(_onda_16k(audio), language=idioma,
+                           word_timestamps=True)
     palabras = []
     for s in segs:
         for w in (s.words or []):
