@@ -62,8 +62,30 @@ def _norm(src: str, dst: str, dur: float, ss: float = 0.0) -> None:
     reelfx.run(cmd)
 
 
+def repeticiones_broll(plan: list) -> dict:
+    """Cuenta cuantas veces sale cada clip de b-roll.
+
+    Un clip repetido se nota mas que un clip mediocre: el ojo lo reconoce y
+    la pieza se lee como si no hubiera material. No se aborta el montaje
+    porque hay piezas donde una vuelta a la misma imagen es deliberada, pero
+    se informa con el dato para que la decision sea consciente.
+    """
+    from collections import Counter
+    return Counter(pathlib.Path(s["src"]).stem for s in plan
+                   if s.get("tipo") == "broll" and s.get("src"))
+
+
 def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
     """Devuelve la lista de clips normalizados, con movimiento y fx aplicados."""
+    cuenta = repeticiones_broll(plan)
+    repes = {k: v for k, v in cuenta.items() if v > 1}
+    if verbose and cuenta:
+        print(f"  b-roll: {sum(cuenta.values())} huecos, {len(cuenta)} clips "
+              f"distintos", file=sys.stderr)
+        if repes:
+            print(f"  AVISO: se repiten {', '.join(f'{k} x{v}' for k, v in sorted(repes.items()))}"
+                  f" -- {sum(repes.values()) - len(repes)} planos de mas sobre "
+                  f"imagen ya vista", file=sys.stderr)
     piezas = []
     for i, s in enumerate(plan):
         base = tmp / f"s{i:03d}.mp4"
