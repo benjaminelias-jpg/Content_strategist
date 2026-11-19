@@ -42,10 +42,18 @@ import reelfx  # noqa: E402
 W, H, FPS = reelfx.W, reelfx.H, reelfx.FPS
 
 
+IMAGENES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
+
+
 def _norm(src: str, dst: str, dur: float, ss: float = 0.0) -> None:
-    """Recorta y normaliza un clip al lienzo."""
+    """Recorta y normaliza un clip al lienzo. Admite imagen fija o video."""
     cmd = ["ffmpeg", "-y"]
-    if ss:
+    es_imagen = pathlib.Path(src).suffix.lower() in IMAGENES
+    if es_imagen:
+        # Sin -loop 1 una imagen da UN solo frame y -t no la alarga: el plano
+        # sale de 1 frame y el montaje se descuadra sin avisar.
+        cmd += ["-loop", "1"]
+    elif ss:
         cmd += ["-ss", str(ss)]
     cmd += ["-i", src, "-t", f"{dur:.4f}",
             "-vf", f"{reelfx._fit()},fps={FPS}",

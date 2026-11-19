@@ -372,7 +372,10 @@ def ef_captions(src: str, dst: str, plan_path: str, fuente: str | None = None,
 
     partes = []
     for w in plan:
-        size = int(H * esc_tipo[w.get("escala", "normal")] / 100 * 1.38)
+        # `px` explicito gana sobre la escala: una palabra larga en escala
+        # enfasis no cabe en 1080 de ancho y hay que encogerla al ancho util.
+        size = int(w.get("px") or
+                   H * esc_tipo[w.get("escala", "normal")] / 100 * 1.38)
         y = w.get("y", g["linea_base_y"])
         col = w.get("color", PRESET["paleta"]["texto_sobre_oscuro"])
         txt = str(w["palabra"]).replace("'", "’").replace(":", "\\:")

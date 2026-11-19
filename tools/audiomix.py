@@ -93,22 +93,26 @@ def qc(path: str) -> int:
         print(f"[{'  ok  ' if ok else ' aviso'}] pico real {tp:.1f} dBFS "
               f"(objetivo <= -1.5)")
 
-    # silencio final
-    err2 = run(["ffmpeg", "-i", path, "-af",
-                "silencedetect=noise=-50dB:d=0.3", "-f", "null", "-"],
-               capturar=True)
-    sil = [l for l in err2.splitlines() if "silence_start" in l]
+    # Silencio final. Se mide el ultimo segundo DIRECTAMENTE en vez de mirar
+    # cuando arranca el silencio: con un cierre de 2.9s el silencio empieza
+    # mucho antes del final y la comprobacion anterior lo daba por sonoro.
     dur = float(subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
          "-of", "csv=p=0", path], capture_output=True, text=True).stdout or 0)
     final_sil = False
-    for l in sil:
-        try:
-            t = float(l.split("silence_start:")[1].strip())
-            if dur - t < 2.0:
-                final_sil = True
-        except (ValueError, IndexError):
-            pass
+    if dur > 1.2:
+        err2 = run(["ffmpeg", "-ss", f"{dur - 1.0:.3f}", "-i", path,
+                    "-map", "0:a", "-af", "astats=metadata=1:reset=0",
+                    "-f", "null", "-"], capturar=True)
+        for l in err2.splitlines():
+            # ffmpeg antepone "[Parsed_astats_0 @ 0x...] " a cada linea, asi
+            # que startswith no vale: hay que buscar la etiqueta dentro.
+            if "RMS level dB:" in l:
+                try:
+                    final_sil = float(l.split("RMS level dB:")[1].strip()) < -50.0
+                except ValueError:
+                    pass
+                break
     print(f"[{'  ok  ' if final_sil else ' aviso'}] cierre "
           f"{'en silencio' if final_sil else 'con sonido: la referencia lo deja mudo'}")
     return fallos
