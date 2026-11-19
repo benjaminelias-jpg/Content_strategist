@@ -2,7 +2,7 @@
   "$schema": "./estilo.schema.json",
   "id": "estilo-2027",
   "nombre": "Reel ensayo-IA / corte por voz",
-  "version": "1.0.0",
+  "version": "1.0.0+medicion-rea-video",
   "origen": {
     "referencia": "Reel 'En 2027 el criterio se va a volver oro para los creadores'",
     "url": "https://www.instagram.com/reels/DfyVhseRL8Z/",
@@ -97,12 +97,30 @@
 
   "transiciones": {
     "flash_negativo": {
-      "descripcion": "Inversion RGB completa del compuesto (incluido el texto) mantenida en duro y cortada en seco.",
+      "descripcion": "Golpe de color de 6 frames sobre el compuesto (texto incluido), sostenido en duro y cortado en seco. NO es una sola receta: la pieza usa DOS tratamientos de canal distintos, medidos contra un frame limpio del mismo plano.",
       "duracion_frames": 6,
       "duracion_s": 0.2,
       "rampa": "ninguna - entra y sale en duro",
       "capa": "ajuste por encima de TODO, texto incluido",
-      "apariciones_referencia": ["5.74-5.94s"],
+      "variantes": [
+        {
+          "id": "inversion_rgb_completa",
+          "receta": "255-canal en los tres",
+          "medido": "corr/pendiente contra el frame limpio: R -0.83/-0.91, G -0.81/-1.15, B -0.83/-0.77. La luma se invierte.",
+          "aparicion_referencia": "5.07-5.44s",
+          "aspecto": "La hoja verde con cielo crema se vuelve una masa gris oscura: parece otro plano en blanco y negro, y no lo es."
+        },
+        {
+          "id": "canal_rojo_anulado",
+          "receta": "R = 0.03*v + 34 (el canal queda aplanado), G = 0.97*v - 77, B = 0.84*v + 8",
+          "medido": "corr/pendiente: R +0.10/+0.03, G +0.86/+0.97, B +0.92/+0.84. R2 del ajuste: R 0.009, G 0.742, B 0.853. La LUMINANCIA se conserva (corr +0.87), por eso no se lee como un negativo.",
+          "aparicion_referencia": "5.74-5.94s",
+          "aspecto": "Cielo crema -> cian, follaje verde -> granate oscuro.",
+          "validacion": "Aplicada a un frame limpio reproduce el frame real con 0.8-1.4 sobre 255 de diferencia por canal.",
+          "ffmpeg": "lutrgb=r='clip(0.03*val+34,0,255)':g='clip(0.97*val-77,0,255)':b='clip(0.84*val+8,0,255)':enable='between(n,N0,N1)'"
+        }
+      ],
+      "correccion": "Hasta esta medicion el preset describia una sola inversion RGB completa fechada en 5.74-5.94s. Son dos efectos: la inversion completa cae en 5.07-5.44s, y en 5.74-5.94s lo que hay es el canal rojo anulado.",
       "cuando": "Cierre de una idea antes de abrir la contraria. Maximo 1-2 por pieza."
     },
     "whip_blur": {
@@ -111,7 +129,8 @@
       "angulo_grados": 115,
       "fuerza_px_1080": 110,
       "ganancia_luma": 1.25,
-      "apariciones_referencia": ["32.53-32.60s"],
+      "apariciones_referencia": ["31.20-31.30s", "32.53-32.60s"],
+      "nota_apariciones": "Dos, no una. 31.20-31.30s (frames 936-937) tapa el paso del personaje disfrazado al presentador; 32.53-32.60s (frames 975-976) tapa un jump cut dentro del propio metraje del presentador. La segunda es la que ya estaba medida (115 grados, 110 px); la primera la detecto rea-video.",
       "cuando": "Jump cut dentro del mismo encuadre de A-roll."
     },
     "zoom_blur_cut": {
@@ -231,6 +250,11 @@
       { "tipo": "humano_en_escala", "ejemplos": ["figura ante un lago", "mujer caminando por un sendero"], "razon": "Puerta emocional antes del remate." },
       { "tipo": "objeto_de_epoca", "ejemplos": ["Macintosh clasico con pantalla CRT"], "razon": "Abre la pieza situandola en el tiempo." }
     ],
-    "regla_oro": "Cada b-roll entra sobre una palabra concreta, no sobre una frase. Si la palabra no tiene imagen, va tarjeta blanca."
+    "regla_oro": "Cada b-roll entra sobre una palabra concreta, no sobre una frase. Si la palabra no tiene imagen, va tarjeta blanca.",
+    "planos_que_son_el_mismo_material": {
+      "descripcion": "Un detector de cortes ve 4 planos entre 4.5 y 5.94s. Son UN SOLO macro de hoja verde con tratamientos de canal encima.",
+      "medido": "Correlacion de luma contra el frame limpio (168): 4.54s 0.87 invertida, 5.11s 0.82 invertida, 5.51s 0.95 directa, 5.81s 0.85 directa. Control con una imagen distinta del mismo tramo (4.84s): 0.12.",
+      "consecuencia": "Al presupuestar b-roll para una pieza nueva, un tramo asi cuesta UN clip, no cuatro. El ritmo sale del tratamiento, no de conseguir mas material."
+    }
   }
 }

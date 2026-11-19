@@ -95,7 +95,7 @@ herramientas lo dicen y proponen alternativa; no fallan en silencio.
 - **Informa con el dato y el sitio.** "El corte de 12.4 s cae en mitad de 'criterio'"
   vale; "quedó raro" no.
 
-## Dos trampas de ffmpeg documentadas
+## Tres trampas de ffmpeg documentadas
 
 Están resueltas dentro de `reelfx.py`. Si tocas las cadenas de filtros, reaparecen:
 
@@ -104,3 +104,11 @@ Están resueltas dentro de `reelfx.py`. Si tocas las cadenas de filtros, reapare
 2. Hace falta **`format=rgb24` explícito antes de cada `blend`**. Tras una cadena de
    blends la negociación acaba en planar, el `screen` cruza los planos, el verde se hunde
    y todo vira a magenta.
+
+3. **`geq` no comparte el evaluador de `enable`.** No conoce `between()` y su contador de
+   frames es `N` en mayúscula, así que `geq=...between(n,172,177)...` aborta con
+   *Unknown function*. Y aunque lo escribas bien (`gte(N,a)*lte(N,b)`), `geq` evalúa la
+   expresión píxel a píxel: sobre la pieza entera no termina en cuatro minutos. Para una
+   corrección por canal usa **`lutrgb`**, que construye una tabla de 256 entradas, sí admite
+   `enable` y hace los mismos 76 s en unos 60, casi todo encodeado. Ambas rutas dan el mismo
+   píxel (diferencia media de 0.07–1.47 sobre 255).

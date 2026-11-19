@@ -10,7 +10,7 @@ Uso:
 
 Efectos:
     punch          zoom que descarga en el ultimo 15% del plano
-    invert-flash   6 frames de inversion RGB sobre el compuesto
+    invert-flash   6 frames de golpe de color sobre el compuesto (dos variantes)
     whip           2 frames de desenfoque direccional entre dos tomas
     zoomblur-cut   corte con zoom+blur de salida y blur de entrada
     white-card     tarjeta blanca con texto negro
@@ -140,16 +140,49 @@ def ef_punch(src: str, dst: str, total_pct: float, reposo: float,
 
 
 def ef_invert_flash(src: str, dst: str, at: float, frames: int = 6,
-                    dry: bool = False) -> None:
-    """Invierte el compuesto entero durante `frames` a partir del segundo `at`.
+                    variante: str = "rgb", dry: bool = False) -> None:
+    """Golpe de color de `frames` sobre el compuesto desde el segundo `at`.
 
-    Se aplica con `negate` activado por ventana temporal, asi que afecta
-    tambien al texto ya quemado: es justo como lo hace la referencia.
+    La referencia usa DOS recetas distintas, medidas canal a canal contra un
+    frame limpio del mismo plano (ver transiciones.flash_negativo.variantes
+    en el preset). Las dos pisan el texto ya quemado:
+
+      rgb   inversion completa de los tres canales. Medido en 5.07-5.44s:
+            corr R -0.83 pend -0.91 | G -0.81 / -1.15 | B -0.83 / -0.77.
+            La imagen cae de luma 144 a 77 y parece otro plano en gris.
+
+      rojo  afin por canal, ajustado contra la referencia en 5.74-5.94s:
+            R 0.03*v+34 (se aplana), G 0.97*v-77, B 0.84*v+8. Conserva la
+            luminancia (corr +0.87), por eso NO se lee como un negativo:
+            el crema vira a cian y el verde a granate. Reproduce el frame
+            real con 1.0-1.6/255 de diferencia por canal.
     """
     # Se activa por numero de frame, no por tiempo: between(t,a,b) es
     # inclusivo en los dos extremos y deja 7 frames cuando pides 6.
     n0 = int(round(at * FPS))
-    vf = f"negate=enable='between(n,{n0},{n0 + frames - 1})'"
+    ventana = f"between(n,{n0},{n0 + frames - 1})"
+    if variante == "rgb":
+        vf = f"negate=enable='{ventana}'"
+    elif variante == "rojo":
+        # Transformacion afin por canal, ajustada por minimos cuadrados entre
+        # el frame limpio (168) y el frame del flash (174) de la referencia:
+        #   R  a=+0.03  b=+34   R2 0.009  -> el canal rojo se aplana
+        #   G  a=+0.97  b=-77   R2 0.742  -> el verde baja 77 niveles
+        #   B  a=+0.84  b=+8    R2 0.853  -> el azul casi no se toca
+        # Validado en un segundo frame del mismo flash (error medio 11-18/255,
+        # con la camara empujando entre los dos). lutrgb no admite enable, asi
+        # que la ventana temporal se hace dentro de geq.
+        # lutrgb, no geq: geq evalua la expresion pixel a pixel y tarda
+        # minutos sobre una pieza entera, mientras que lutrgb construye una
+        # tabla de 256 entradas por canal (76s de video en ~7s). lutrgb SI
+        # admite `enable`, asi que la ventana se pone igual que en negate.
+        vf = ("lutrgb="
+              "r='clip(0.03*val+34,0,255)':"
+              "g='clip(0.97*val-77,0,255)':"
+              "b='clip(0.84*val+8,0,255)'"
+              f":enable='{ventana}'")
+    else:
+        raise SystemExit(f"variante desconocida: {variante} (usa rgb o rojo)")
     run(["ffmpeg", "-y", "-i", src, "-vf", vf,
          "-c:v", "libx264", "-crf", "16", "-preset", "medium",
          "-pix_fmt", "yuv420p", "-c:a", "copy", dst], dry)
@@ -441,6 +474,8 @@ def main() -> None:
     s = sub.add_parser("invert-flash"); s.add_argument("src"); s.add_argument("dst")
     s.add_argument("--at", type=float, required=True)
     s.add_argument("--frames", type=int, default=6)
+    s.add_argument("--variante", choices=("rgb", "rojo"), default="rgb",
+                   help="rgb = inversion completa (5.07s); rojo = canal rojo anulado (5.74s)")
 
     s = sub.add_parser("whip"); s.add_argument("a"); s.add_argument("b")
     s.add_argument("dst"); s.add_argument("--frames", type=int, default=2)
@@ -473,7 +508,7 @@ def main() -> None:
     if a.cmd == "punch":
         ef_punch(a.src, a.dst, a.pct, a.reposo, dry=d)
     elif a.cmd == "invert-flash":
-        ef_invert_flash(a.src, a.dst, a.at, a.frames, dry=d)
+        ef_invert_flash(a.src, a.dst, a.at, a.frames, a.variante, dry=d)
     elif a.cmd == "whip":
         ef_whip(a.a, a.b, a.dst, a.frames, a.angulo, a.fuerza, dry=d)
     elif a.cmd == "zoomblur-cut":
