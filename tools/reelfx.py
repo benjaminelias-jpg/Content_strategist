@@ -330,12 +330,21 @@ def ef_motion_card(texto: str, dst: str, dur: float = 2.0, *,
                  f":fontcolor={color}@0.72:x=(w-text_w)/2:y=(h-text_h)/2+{int(H*0.09)}"
                  + (f":fontfile={fuente_it}" if fuente_it else ""))
     if barra:
-        bw, bh = int(W * 0.34), max(2, int(H * 0.006))
+        bw, bh = int(W * 0.34), max(3, int(H * 0.009))
         bx, by = (W - bw) // 2, int(H * 0.70)
-        f.append(f"drawbox=x={bx}:y={by}:w={bw}:h={bh}:color={color}@0.30:t=fill")
-        # el relleno avanza con el tiempo, easeInOut
-        av = f"min(1\\,t/{max(dur-0.2,0.1):.3f})"
-        f.append(f"drawbox=x={bx}:y={by}:w='{bw}*({av})':h={bh}:color={color}:t=fill")
+        f.append(f"drawbox=x={bx}:y={by}:w={bw}:h={bh}:color={color}@0.22:t=fill")
+        # TRAMPA DE FFMPEG: en drawbox la variable `t` es el GROSOR del trazo,
+        # no el timestamp. La version anterior ponia w='bw*min(1,t/dur)', que
+        # con t=grosor da min(1, numero enorme) = 1 en TODOS los frames: la
+        # barra salia llena desde el primer frame y la tarjeta era estatica,
+        # justo lo contrario de un motion graphic. Medido: relleno 652px de
+        # 652 en t=0.1s. Se resuelve como las rampas del resto del fichero,
+        # un paso por frame habilitado por numero de frame.
+        nf = max(1, int(round(dur * FPS)))
+        for n in range(nf):
+            av = min(1.0, (n / FPS) / max(dur - 0.2, 0.1))
+            f.append(f"drawbox=x={bx}:y={by}:w={max(1, int(bw * av))}:h={bh}"
+                     f":color={color}:t=fill:enable='eq(n,{n})'")
     f.append("noise=alls=4:allf=t")
     f.append("format=yuv420p")
 
