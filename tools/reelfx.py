@@ -256,6 +256,49 @@ def ef_white_card(texto: str, dst: str, dur: float = 0.67,
          "-pix_fmt", "yuv420p", dst], dry)
 
 
+def ef_motion_card(texto: str, dst: str, dur: float = 2.0, *,
+                   sub: str = "", fondo: str = "#0A0A0A",
+                   color: str | None = None, barra: bool = True,
+                   fuente: str | None = None, dry: bool = False) -> None:
+    """Tarjeta de motion graphic: texto que entra con escala y barra que carga.
+
+    Es el recurso de la pantalla CRT de la referencia ("Loading... 13%" sobre
+    un filete fino) llevado a tarjeta completa. Barata de hacer y aguanta
+    bien en pantalla, que es justo para lo que sirve.
+    """
+    color = color or PRESET["paleta"]["texto_sobre_oscuro"]
+    fuente = fuente or _buscar_fuente()
+    fuente_it = _buscar_fuente(italica=True)
+    size = int(H * PRESET["tipografia"]["escalas_alto_caja_pct_alto_lienzo"]["enfasis"]
+               / 100 * 1.38)
+    esc = lambda s: s.replace("'", "’").replace(":", "\\:").replace("%", "\\%")
+
+    # entrada: el cuerpo crece de 0.86 a 1.0 en los primeros 0.35s, con easeOut
+    ent = 0.35
+    k = f"(1-0.14*pow(max(0\\,1-t/{ent})\\,3))"
+    f = [f"drawtext=text='{esc(texto)}':fontsize='{size}*{k}':fontcolor={color}"
+         f":x=(w-text_w)/2:y=(h-text_h)/2-{int(H*0.03)}"
+         + (f":fontfile={fuente}" if fuente else "")]
+    if sub:
+        f.append(f"drawtext=text='{esc(sub)}':fontsize={int(size*0.32)}"
+                 f":fontcolor={color}@0.72:x=(w-text_w)/2:y=(h-text_h)/2+{int(H*0.09)}"
+                 + (f":fontfile={fuente_it}" if fuente_it else ""))
+    if barra:
+        bw, bh = int(W * 0.34), max(2, int(H * 0.006))
+        bx, by = (W - bw) // 2, int(H * 0.70)
+        f.append(f"drawbox=x={bx}:y={by}:w={bw}:h={bh}:color={color}@0.30:t=fill")
+        # el relleno avanza con el tiempo, easeInOut
+        av = f"min(1\\,t/{max(dur-0.2,0.1):.3f})"
+        f.append(f"drawbox=x={bx}:y={by}:w='{bw}*({av})':h={bh}:color={color}:t=fill")
+    f.append("noise=alls=4:allf=t")
+    f.append("format=yuv420p")
+
+    run(["ffmpeg", "-y", "-f", "lavfi",
+         "-i", f"color=c={fondo}:s={W}x{H}:r={FPS}:d={dur}",
+         "-vf", ",".join(f), "-c:v", "libx264", "-crf", "16",
+         "-preset", "medium", dst], dry)
+
+
 def ef_endcard(dst: str, dur: float | None = None, dry: bool = False) -> None:
     """Cierre: diana concentrica blanca sobre negro."""
     e = PRESET["endcard"]
@@ -382,7 +425,7 @@ def ef_captions(src: str, dst: str, plan_path: str, fuente: str | None = None,
     fuente = fuente or _buscar_fuente()
     fuente_it = _buscar_fuente(italica=True)
 
-    partes = []
+    partes, negativos = [], []
     for w in plan:
         # `px` explicito gana sobre la escala: una palabra larga en escala
         # enfasis no cabe en 1080 de ancho y hay que encogerla al ancho util.
@@ -396,17 +439,12 @@ def ef_captions(src: str, dst: str, plan_path: str, fuente: str | None = None,
                 f":enable='between(t,{w['t_in']},{w['t_out']})'"
                 + (f":fontfile={ff}" if ff else ""))
 
-        if w.get("rgbsplit"):
-            # Subrayado de la referencia: separacion RGB sobre el texto, no un
-            # cambio de color. Medido en el original: cian en el borde
-            # izquierdo y naranja en el derecho, -3px y +4px sobre 960 de
-            # ancho. Se consigue dibujando la palabra tres veces: cian
-            # desplazada a la izquierda, naranja a la derecha, y blanca encima,
-            # que tapa el centro y deja solo los flecos de color.
-            dx = max(2, round(3.5 * W / 960))
-            for color, off in (("#00E5FF", -dx), ("#FF7A1A", dx), (col, 0)):
-                partes.append(f"drawtext=text='{txt}':fontcolor={color}"
-                              f":x={w['x']}*w-text_w/2+{off}:{base}")
+        if w.get("negativo"):
+            # El texto en negativo NO son bordes de color: la palabra actua de
+            # mascara e INVIERTE lo que tiene detras, semitranslucido. Se
+            # resuelve aparte, en ef_captions, con maskedmerge sobre una copia
+            # invertida del plano. Aqui solo se recoge para esa pasada.
+            negativos.append((txt, w, size, ff))
             continue
 
         partes.append(f"drawtext=text='{txt}':fontcolor={col}"
@@ -416,7 +454,45 @@ def ef_captions(src: str, dst: str, plan_path: str, fuente: str | None = None,
                       f":shadowy={som['desplazamiento_px_1080'][1]}")
 
     vf = _fit() + ("," + ",".join(partes) if partes else "")
-    run(["ffmpeg", "-y", "-i", src, "-vf", vf, "-r", str(FPS),
+
+    if not negativos:
+        run(["ffmpeg", "-y", "-i", src, "-vf", vf, "-r", str(FPS),
+             "-c:v", "libx264", "-crf", "16", "-preset", "medium",
+             "-pix_fmt", "yuv420p", "-c:a", "copy", dst], dry)
+        return
+
+    # --- texto en negativo -------------------------------------------------
+    # La palabra no se pinta: recorta. Se construye una mascara con las
+    # palabras en blanco sobre negro y se usa con maskedmerge para que dentro
+    # de la letra se vea el plano INVERTIDO y fuera el normal. Un gris en vez
+    # de blanco puro deja el efecto semitranslucido, que es como se ve en los
+    # ejemplos.
+    mask_parts = []
+    for txt, w, size, ff in negativos:
+        gris = int(255 * float(w.get("negativo_fuerza", 0.88)))
+        mask_parts.append(
+            f"drawtext=text='{txt}':fontcolor=0x{gris:02X}{gris:02X}{gris:02X}"
+            f":fontsize={size}:x={w['x']}*w-text_w/2:y={w.get('y', g['linea_base_y'])}*h-text_h/2"
+            f":enable='between(t,{w['t_in']},{w['t_out']})'"
+            + (f":fontfile={ff}" if ff else ""))
+
+    # La fuente `color` del mask es un stream infinito y maskedmerge no
+    # propaga el EOF: sin acotarla con :d= el render no termina nunca y el
+    # fichero crece sin limite. Se fija a la duracion real de la entrada.
+    dur = probe(src)["dur"]
+    fc = (
+        f"[0:v]{_fit()},fps={FPS}"
+        + (f",{','.join(partes)}" if partes else "")
+        # gbrp (RGB planar), no rgb24: maskedmerge opera por PLANOS y con un
+        # formato empaquetado colapsa la imagen a blanco y negro.
+        + ",format=gbrp,split=2[base][toinv];"
+        f"[toinv]negate,format=gbrp[inv];"
+        f"color=black:s={W}x{H}:r={FPS}:d={dur:.3f},{','.join(mask_parts)},"
+        f"format=gbrp[mask];"
+        f"[base][inv][mask]maskedmerge,format=yuv420p[v]"
+    )
+    run(["ffmpeg", "-y", "-i", src, "-filter_complex", fc, "-map", "[v]",
+         "-map", "0:a?", "-t", f"{dur:.3f}", "-r", str(FPS),
          "-c:v", "libx264", "-crf", "16", "-preset", "medium",
          "-pix_fmt", "yuv420p", "-c:a", "copy", dst], dry)
 
@@ -484,6 +560,13 @@ def main() -> None:
     s = sub.add_parser("white-card"); s.add_argument("texto"); s.add_argument("dst")
     s.add_argument("--dur", type=float, default=0.67)
 
+    s = sub.add_parser("motion-card"); s.add_argument("texto"); s.add_argument("dst")
+    s.add_argument("--dur", type=float, default=2.0)
+    s.add_argument("--sub", default="")
+    s.add_argument("--fondo", default="#0A0A0A")
+    s.add_argument("--color", default=None)
+    s.add_argument("--sin-barra", action="store_true")
+
     s = sub.add_parser("endcard"); s.add_argument("dst")
     s.add_argument("--dur", type=float, default=None)
 
@@ -509,6 +592,9 @@ def main() -> None:
         ef_zoomblur_cut(a.a, a.b, a.dst, a.f_out, a.f_in, a.zoom_pct, dry=d)
     elif a.cmd == "white-card":
         ef_white_card(a.texto, a.dst, a.dur, dry=d)
+    elif a.cmd == "motion-card":
+        ef_motion_card(a.texto, a.dst, a.dur, sub=a.sub, fondo=a.fondo,
+                       color=a.color, barra=not a.sin_barra, dry=d)
     elif a.cmd == "endcard":
         ef_endcard(a.dst, a.dur, dry=d)
     elif a.cmd == "crt":

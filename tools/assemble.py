@@ -72,6 +72,12 @@ def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
         if tipo == "tarjeta":
             reelfx.ef_white_card(s.get("texto", ""), str(base),
                                  s.get("dur", 0.67))
+        elif tipo == "motion":
+            reelfx.ef_motion_card(s.get("texto", ""), str(base),
+                                  s.get("dur", 2.0), sub=s.get("sub", ""),
+                                  fondo=s.get("fondo", "#0A0A0A"),
+                                  color=s.get("color"),
+                                  barra=s.get("barra", True))
         elif tipo == "endcard":
             reelfx.ef_endcard(str(base), s.get("dur"))
         else:

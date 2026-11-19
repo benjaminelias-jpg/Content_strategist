@@ -97,14 +97,14 @@
       "razon": "Despega el texto del b-roll sin que se lea como sombra."
     },
     "subrayado": {
-      "que_es": "SEPARACION RGB sobre el texto, no un cambio de color. Cian en el borde izquierdo y naranja en el derecho.",
-      "medido_en_960": {
-        "canal_R_px": -3,
-        "canal_B_px": 4
-      },
-      "como_se_hace": "Se dibuja la palabra tres veces: cian desplazada a la izquierda, naranja a la derecha, y blanca encima, que tapa el centro y deja solo los flecos.",
-      "aparicion_referencia": "10.9s, sobre \"sin precedentes\"",
-      "nota": "El rojo como color de enfasis que figuraba antes en la paleta era una invencion mia, no estaba medido. El subrayado real de la pieza es este."
+      "que_es": "TEXTO EN NEGATIVO. La palabra no se pinta: actua de mascara e INVIERTE lo que tiene detras, semitranslucida. Es el efecto conocido de TikTok.",
+      "como_se_hace": "maskedmerge entre el plano normal y una copia invertida con negate, usando la palabra en gris sobre negro como mascara. El gris (no blanco puro) da la semitransparencia.",
+      "fuerza": 0.88,
+      "dos_trampas": [
+        "La fuente color del mask es infinita y maskedmerge no propaga el EOF: hay que acotarla con :d= a la duracion real o el render no termina nunca.",
+        "maskedmerge opera por PLANOS: con rgb24 empaquetado colapsa la imagen a blanco y negro. Hay que pasarle gbrp."
+      ],
+      "descartado": "Antes puse separacion RGB (cian a un lado, naranja al otro) y antes de eso un color rojo de acento. Ninguna de las dos era el efecto: la primera me la invente, la segunda la lei mal del original."
     }
   },
   "rejilla_subtitulos": {
@@ -226,7 +226,12 @@
         "25.36-25.99s",
         "60.33-62.06s"
       ],
-      "cuando": "Respiro y reinicio. Baja el pulso antes de subir otra vez."
+      "cuando": "Respiro y reinicio. Baja el pulso antes de subir otra vez.",
+      "duracion_recomendada_s": [
+        0.9,
+        1.6
+      ],
+      "nota_subtitulos": "Sobre la tarjeta NO se queman subtitulos: la tarjeta ya lleva su texto y se enciman."
     },
     "corte_seco": {
       "descripcion": "El 90% de las transiciones. Sin nada.",
@@ -424,5 +429,16 @@
       }
     ],
     "regla_oro": "Cada b-roll entra sobre una palabra concreta, no sobre una frase. Si la palabra no tiene imagen, va tarjeta blanca."
+  },
+  "motion_graphics": {
+    "tarjeta_de_carga": {
+      "descripcion": "Tarjeta a pantalla completa con un texto grande que entra creciendo, un subtitulo en serif italica y un filete que se rellena. Es el recurso del \"Loading... 13%\" de la pantalla CRT del original, llevado a tarjeta.",
+      "entrada": "el cuerpo crece de 0.86 a 1.0 en 0.35s, easeOut",
+      "barra": "filete de 0.6% de alto y 34% de ancho, centrado al 70% de altura",
+      "duracion_util_s": [
+        1.2,
+        2.0
+      ]
+    }
   }
 }
