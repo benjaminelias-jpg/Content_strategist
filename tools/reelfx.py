@@ -36,6 +36,18 @@ W = PRESET["lienzo"]["ancho"]
 H = PRESET["lienzo"]["alto"]
 FPS = PRESET["lienzo"]["fps"]
 
+# El preset describe el lienzo de la referencia (vertical). Un material rodado
+# en horizontal NO se convierte a vertical salvo que se pida: forzarlo obliga a
+# rellenar con bandas y destroza el encuadre. REELFX_LIENZO=AxB manda sobre el
+# preset para montar en el formato nativo del material.
+import os as _os
+if _os.environ.get("REELFX_LIENZO"):
+    try:
+        _w, _h = (int(v) for v in _os.environ["REELFX_LIENZO"].lower().split("x"))
+        W, H = _w, _h
+    except ValueError:
+        pass
+
 
 # ---------------------------------------------------------------- utilidades
 
