@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import shlex
 import subprocess
@@ -32,8 +33,32 @@ import sys
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 PRESET = json.loads((RAIZ / "presets" / "estilo-2027.json").read_text(encoding="utf-8"))
 
-W = PRESET["lienzo"]["ancho"]
-H = PRESET["lienzo"]["alto"]
+def _lienzo():
+    """Tamano del lienzo. El preset manda; REEL_LIENZO lo pisa para una tirada.
+
+    El preset fija 1080x1920 porque la referencia es un reel vertical, pero eso
+    es una decision de ESA pieza, no del estilo: el ritmo, la rejilla y las
+    transiciones estan normalizadas 0-1 y valen en cualquier relacion. Para
+    montar en horizontal o en cuadrado, sin tocar la fuente de verdad:
+
+        REEL_LIENZO=1920x1080 python3 tools/assemble.py ...
+        REEL_LIENZO=1080x1080 python3 tools/reelfx.py ...
+    """
+    w, h = PRESET["lienzo"]["ancho"], PRESET["lienzo"]["alto"]
+    env = os.environ.get("REEL_LIENZO", "").strip().lower()
+    if env:
+        try:
+            ew, eh = (int(v) for v in env.replace("x", " ").split())
+        except ValueError:
+            raise SystemExit(f"REEL_LIENZO='{env}' no se entiende; usa ANCHOxALTO, p.ej. 1920x1080")
+        if ew < 16 or eh < 16:
+            raise SystemExit(f"REEL_LIENZO='{env}': medidas demasiado pequenas")
+        # ffmpeg pide pares en yuv420p
+        w, h = ew - ew % 2, eh - eh % 2
+    return w, h
+
+
+W, H = _lienzo()
 FPS = PRESET["lienzo"]["fps"]
 
 
@@ -68,7 +93,7 @@ def probe(path: str) -> dict:
 
 
 def _fit(target_w: int = W, target_h: int = H) -> str:
-    """Escala+recorta cualquier fuente al lienzo vertical sin deformar."""
+    """Escala+recorta cualquier fuente al lienzo sin deformar."""
     return (f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,"
             f"crop={target_w}:{target_h},setsar=1")
 

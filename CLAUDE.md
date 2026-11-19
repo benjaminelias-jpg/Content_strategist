@@ -80,11 +80,44 @@ lo que midan entra en el preset cuando alguien lo decide, no automáticamente.
 | `tools/compose.py` | texto pixelado detrás del sujeto (matte + apilado) |
 | `tools/vendor_refresh.sh` | recopia `vendor/` y sus skills desde los commits fijados |
 | `tools/vendor_install.sh` | instala earshot y rea-video (necesita ffmpeg) |
+| `tools/broll_drive.sh` | baja el b-roll desde la carpeta de Drive del usuario |
+| `tools/captionplan.py` | convierte el mapa de palabras en plan de subtítulos |
 
 Dependencias: `ffmpeg`, `python3` con `opencv-python-headless`, `numpy`, `Pillow`.
 Las de `vendor/` se instalan aparte y están listadas en `vendor/README.md`.
 Opcionales: `faster-whisper` (transcripción), `rembg` (recorte del sujeto). Sin ellas las
 herramientas lo dicen y proponen alternativa; no fallan en silencio.
+
+## El b-roll sale de Drive
+
+La primera fuente de b-roll es
+[esta carpeta de Drive](https://drive.google.com/drive/folders/1WEtcffz7ng4FSCyl0aA4hFwuwiXJUfnh).
+`tools/broll_drive.sh` la baja a `media/broll_drive/` y `catalogo.json` guarda, por clip, su
+resolución, duración y **si ya trae movimiento propio** — que decide si se le puede poner punch
+encima o no. Los `.mp4` no se versionan; el catálogo sí.
+
+Dos cosas medidas sobre lo que hay hoy:
+
+- **9 de 10 clips son 720×1280.** El lienzo del preset es 1080×1920, así que montarlos ahí es
+  un escalado de 1.5× que ablanda la imagen. O se monta a 720×1280, o se reservan para planos
+  cortos.
+- **La procedencia no está establecida.** Los nombres originales empiezan por `From
+  Klickpin.com`, un descargador de Pinterest, y varios clips parecen metraje de película. Eso
+  choca con la regla de abajo. Hasta que se resuelva, sirven como referencia de tono para
+  generar equivalentes con `presets/broll-prompts.json`, no como material de entrega.
+
+## El lienzo no es sagrado
+
+El preset fija 1080×1920 porque la referencia era un reel vertical, pero **eso es de esa pieza,
+no del estilo**: el ritmo, la rejilla de subtítulos y las transiciones están normalizados 0–1 y
+valen en cualquier relación de aspecto. Para montar en otro formato sin tocar la fuente de
+verdad:
+
+```bash
+REEL_LIENZO=1920x1080 python3 tools/assemble.py --plan plan/planos.json --salida out/master.mp4
+```
+
+Pregunta el formato antes de montar. No lo des por hecho.
 
 ## Convenciones
 
