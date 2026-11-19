@@ -85,6 +85,16 @@ def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
                 raise SystemExit(f"plano {i}: falta 'src'")
             if not pathlib.Path(s["src"]).exists():
                 raise SystemExit(f"plano {i}: no existe {s['src']}")
+            # Un ss mas alla del final da un recorte VACIO, y el fallo salta
+            # mucho despues en probe() sin decir que plano lo causo.
+            if pathlib.Path(s["src"]).suffix.lower() not in IMAGENES:
+                dsrc = reelfx.probe(s["src"])["dur"]
+                need = s.get("ss", 0.0) + s.get("dur", 2.0)
+                if need > dsrc + 0.05:
+                    raise SystemExit(
+                        f"plano {i}: {pathlib.Path(s['src']).name} dura "
+                        f"{dsrc:.2f}s y el plano pide ss={s.get('ss',0)}+"
+                        f"{s.get('dur',0)}s = {need:.2f}s")
             _norm(s["src"], str(base), s.get("dur", 2.0), s.get("ss", 0.0))
 
         actual = base
