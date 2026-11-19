@@ -204,7 +204,7 @@ Reparto aproximado: **55 % A-roll, 45 % b-roll.**
 
 | familia | ejemplos en la pieza | para qué sirve |
 |---|---|---|
-| archivo real | foto del equipo de OpenAI, entrevista de Sam Altman, tuit del millón de usuarios | ancla la afirmación en un hecho verificable |
+| archivo real | foto de la primera promoción de Y Combinator, entrevista de Sam Altman, tuit del millón de usuarios | ancla la afirmación en un hecho verificable — **o eso aparenta: ver §11** |
 | captura de pantalla | UI de ChatGPT en navegador, selección de texto con el cursor a la vista | prueba de primera mano, se graba uno mismo |
 | macro / textura | hoja, reloj, ojo con código reflejado | metáfora para conceptos que no tienen imagen |
 | humano a escala | figura ante un lago, mujer caminando por un sendero | puerta emocional antes del remate |
@@ -256,7 +256,7 @@ corte sí son exactos.
 | 8.41 | ciudad barrida | — |
 | 8.94 | reloj antiguo, marca "FESTA" | estamos viviendo |
 | 10.28 | A-roll | sin precedentes |
-| 12.48 | foto equipo OpenAI | NOVIEMBRE 2022. |
+| 12.48 | foto 1ª promoción de Y Combinator, 2005 (**no** OpenAI) | NOVIEMBRE 2022. |
 | 13.55 | **zoom + blur** | — |
 | 14.45 | Sam Altman | lanza ChatGPT |
 | 15.92 | UI de ChatGPT | una herramienta que puso |
@@ -303,3 +303,110 @@ Las hojas de contacto y las tiras frame a frame que sostienen todo esto están e
 - `broll_catalogo.png` — los 21 planos de b-roll, etiquetados P00–P20
 - `cut30.png` — el cambio de personaje de 29.96 s, frame a frame
 - `pixelcut.png` — los 2 frames de esa transición, a resolución completa
+
+---
+
+## 11. Procedencia del b-roll
+
+Investigación posterior sobre los 21 planos de b-roll. Trajo dos correcciones a lo que yo
+mismo había afirmado antes en este documento, y un problema de licencia que conviene
+mirar antes de imitar nada.
+
+> **Cobertura incompleta, y hay que decirlo.** La investigación corrió como tres etapas
+> encadenadas —identificar, refutar, buscar sustituto— y el límite de uso cortó **34 de
+> los 54 agentes**. Se completaron 20 de 21 identificaciones; las etapas de **refutación
+> adversarial y de sustitución no llegaron a correr**. Por eso el recuento automático dice
+> "0 refutados" y "0 no reutilizables": no es un hallazgo, es una etapa que no se ejecutó.
+> Lo de abajo son identificaciones **sin contrastar por un segundo agente**, salvo donde
+> se indica que lo verifiqué yo.
+
+### 11.1 La foto no es de OpenAI
+
+Lo di por hecho y estaba equivocado. La foto de grupo de 12.48 s es la **primera promoción
+de Y Combinator**, el Summer Founders Program de 2005, en Cambridge (Massachusetts). En
+ella están Jessica Livingston, un **Sam Altman de 20 años** y Aaron Swartz. El cotejo fue
+prenda a prenda y persona a persona contra la copia publicada, no parecido temático.
+
+El rótulo de la pieza dice `NOVIEMBRE 2022.` sobre una foto de **2005**: 17 años de
+desfase, y sugiere que son empleados de OpenAI. El único vínculo real con OpenAI es que
+Altman sale en la foto.
+
+Autoría y licencia **no establecidas**: circula como repost sin crédito. Hay otra foto
+distinta de la misma promoción (todos sentados a la mesa) acreditada a Alex Lewin, pero
+esa atribución **no se puede trasladar** a esta toma.
+
+### 11.2 El bloque de 21.9–23.5 s es cine comercial con copyright
+
+Lo que yo había leído como "jet privado + evento" no es un plano: son **cinco microcortes
+de ~0.3 s**, y los cinco salen de la misma película — **"Artificial" (2026)**, dirigida por
+Luca Guadagnino, sobre la crisis de OpenAI de noviembre de 2023, distribuida por **NEON**.
+
+La identificación fue fotograma contra fotograma: los cinco microplanos coinciden con
+cinco stills promocionales distintos (el jet, la cena de equipo, la camiseta con el logo
+de OpenAI, la "Q" roja sobre cristal y el corte de cinta).
+
+**Esto no se puede licenciar como stock.** Es metraje de una película comercial. Usarlo en
+una pieza propia monetizada es infracción salvo amparo de cita, que es una decisión
+jurídica del usuario y no una licencia. Si tu pieza se monetiza, sustitúyelo.
+
+### 11.3 El reel tiene tres días, no es de 2024
+
+**Verificado de forma independiente.** El shortcode de Instagram `DfyVhseRL8Z` decodifica
+en base64 al id `4031379290921942809`; desplazado 23 bits y sumada la época de Instagram
+da **2026-11-16 02:58 UTC**.
+
+Eso recontextualiza la pieza entera: no es un ensayo atemporal sobre IA, es contenido
+montado sobre la **campaña de lanzamiento** de una película que se estrena en diciembre de
+2026.
+
+### 11.4 El Macintosh de apertura está generado con IA
+
+Confianza alta, y la prueba está en el logo. El distintivo del frontal es un **disco
+circular con bandas en orden espectral** (rojo, naranja, amarillo, verde, azul, violeta).
+El logo arcoíris de Apple es una **silueta de manzana** y su orden es deliberadamente **no
+espectral** —verde arriba, luego amarillo, naranja, rojo, morado, azul—. Fallan a la vez
+la forma y el orden. Ningún Macintosh llevó nunca un roundel circular.
+
+Se suma: proporciones que no corresponden a ningún modelo real, ausencia del mando de
+brillo, una fila de pseudo-iconos bajo el "2027" que **cambia entre el frame de 0 s y el
+de 1 s**, y texto selectivamente ilegible junto a un filete nítido del mismo tamaño —
+firma generativa.
+
+**Riesgo de marca aparte del de copyright:** el plano muestra un arcoíris deformado sobre
+un objeto reconocible como Apple. Eso es un problema por sí mismo en una pieza comercial.
+
+### 11.5 El resto
+
+| id | t | naturaleza | confianza |
+|---|---|---|---|
+| P00 | 0.00–2.17 | generado con IA | alta |
+| P01 | 4.34–5.74 | stock — **macro de hoja verde**, no superficie marrón (ver abajo) | baja |
+| P02 | 5.94–7.21 | stock, ojo con código | media |
+| P03–P06 | 7.21–10.28 | no identificados | ninguna |
+| P07 | 12.48–13.55 | archivo real: YC 2005 | alta |
+| P08 | 14.45–15.92 | entrevista de Sam Altman, clip concreto no identificado | ninguna |
+| P09 | 15.92–17.48 | captura propia de ChatGPT | alta |
+| P10 | 21.89–23.52 | película "Artificial" (2026), NEON | alta |
+| P11 | 23.52–25.36 | captura del tuit de Altman | alta |
+| P12–P13 | 26.09–27.36 | no identificados | ninguna |
+| P14 | ~29.9–30.5 | rodaje propio: el autor disfrazado | alta |
+| P15–P16 | 35.87–39.74 | stock / no identificado | baja |
+| P17–P18 | 43.28–47.81 | rodaje propio | baja / media |
+| P20 | 64.00–67.50 | stock genérico | media |
+
+**Corrección sobre P01:** no es una superficie marrón granulada. Es un **macro de hoja
+verde** con nervaduras reticuladas y una mancha clorótica. Lo marrón es el propio grade
+cálido del reel en la entrada del plano, que vira a verde pleno hacia los 5.0 s antes del
+flash en negativo. Son tres aspectos del mismo plano, no tres materiales.
+
+### 11.6 Qué significa esto si quieres imitar la pieza
+
+La familia que yo llamé "archivo real" y presenté como lo que **ancla la afirmación en un
+hecho verificable** resulta ser, en esta pieza: una foto de 2005 rotulada con una fecha de
+2022, cine de ficción presentado como material de archivo, y un Macintosh generado que
+nunca existió.
+
+El recurso retórico funciona —por eso la pieza convence—, pero **funciona porque el
+espectador asume documentación donde hay atrezo**. Reprodúcelo con el equivalente real de
+tu tema, no copiando el material ajeno: el de la referencia tiene a la vez un problema de
+copyright, uno de marca y uno de veracidad.

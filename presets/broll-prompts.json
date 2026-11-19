@@ -1,6 +1,5 @@
 {
   "nota": "Prompts que YA produjeron un plano valido contra la referencia. No son ejemplos: son la linea base. Para un tema nuevo se cambia el SUJETO y se conserva la gramatica fotografica (encuadre, optica, luz, paleta, profundidad de campo y las negaciones), que es lo que hace que los planos pertenezcan a la misma pieza.",
-
   "gramatica_comun": {
     "formato": "vertical 9:16, se pide explicitamente en el prompt",
     "optica": "profundidad de campo corta, sensacion anamorfica, grano fino de pelicula",
@@ -9,8 +8,8 @@
     "negaciones_obligatorias": "no text, no logos, no people (salvo cuando la persona ES el plano), no readable brand names",
     "razon": "Los modelos meten texto basura y marcas si no se les prohibe, y un rotulo inventado arruina el plano e introduce un problema de derechos."
   },
-
   "proceso": [
+    "0. Describir el plano desde un frame LIMPIO: ni bajo el grade de entrada, ni dentro de un flash o una transicion. El tratamiento de color de la pieza miente sobre lo que es el material. Comprobarlo en dos o tres instantes del mismo plano antes de escribir el prompt.",
     "1. Escribir el prompt con la gramatica comun y el sujeto del tema propio.",
     "2. Generar con images_generate (mode auto).",
     "3. MIRAR el resultado. No aceptarlo sin verlo.",
@@ -18,7 +17,6 @@
     "5. Descargar y normalizar al lienzo 1080x1920.",
     "6. Comprobar el movimiento con tools/motion_probe.py antes de montarlo."
   ],
-
   "iteraciones_reales": {
     "P00_macintosh": {
       "v1_fallo": "Salio descentrado, con teclado y raton en cuadro, el flexo visible y la habitacion demasiado iluminada: leia como escena de escritorio, no como plano heroe.",
@@ -29,17 +27,22 @@
       "v1_fallo": "Salio una seccion de tronco con veta de madera muy marcada, no la costra granulada de la referencia.",
       "correccion": "Se anadio 'covered in countless tiny dark granular specks, dense and sandy, not wood grain' y se bajo el arco a 'low, almost flat horizon'.",
       "v2": "Correcto."
+    },
+    "P01_hoja": {
+      "v1_fallo": "Se genero una costra marron granulada porque la descripcion salio de un frame a 4.40s, que esta bajo el grade calido casi sepia de entrada del plano. El material real es un MACRO DE HOJA VERDE: a 5.65s se ve en verde pleno, con nervaduras reticuladas y una mancha clorotica amarilla junto a un nervio. Entre 4.50 y 5.44 el plano ademas aparece invertido por el flash en negativo. Tres aspectos del mismo plano, no tres materiales.",
+      "correccion": "Describir desde el frame limpio de 5.65s y regenerar como hoja verde con nervaduras, mancha clorotica y motas necroticas.",
+      "v2": "Correcto.",
+      "leccion": "Un plano se describe desde un frame sin grade ni efecto. Si no, generas el material equivocado con total conviccion."
     }
   },
-
   "prompts": {
     "objeto_de_epoca": {
       "uso": "Abre la pieza situandola en el tiempo. Lleva CRT encima con tools/reelfx.py crt.",
       "prompt": "Cinematic hero still, vertical 9:16, camera dead-on and centered. A beige vintage Macintosh classic all-in-one computer, its one-piece case filling the middle of the frame, standing alone on a bare warm wooden tabletop. The room behind is almost entirely black, only the faintest suggestion of a dark picture frame on the wall. A single warm tungsten source from low and slightly left pools a soft ellipse of light on the wood around the base and rakes the right side of the case, everything else falls to near black. The small CRT screen emits a soft neutral glow, blank, no content. Strong vignette, deep crushed blacks, warm amber highlights, fine film grain, shallow depth of field. No keyboard, no mouse, no lamp visible in frame, no text, no logos, no people."
     },
     "macro_textura": {
-      "uso": "Metafora para conceptos sin imagen. La referencia lo usa sobre 'todos sabemos que'.",
-      "prompt": "Extreme macro photograph, vertical 9:16. A shallow arc of dried brown and beige organic crust, like the skin of a seed pod or sun-baked earth, sweeping gently across the frame as a low, almost flat horizon in the lower two thirds. The surface is covered in countless tiny dark granular specks, dense and sandy, not wood grain. Above the arc, pure blown-out white, completely featureless. A couple of fine dark hairline cracks. Only a narrow band near the ridge is in focus, the rest dissolves into creamy blur. Soft diffuse overcast daylight, high key, minimal and abstract. No text, no people."
+      "uso": "Metafora para conceptos sin imagen. La referencia lo usa sobre 'todos sabemos que la inteligencia artificial'.",
+      "prompt": "Extreme macro photograph, vertical 9:16. The curved edge of a single green leaf arcs across the frame as a low, soft horizon in the lower two thirds, against a completely blown-out white sky with no detail. The leaf surface shows fine reticulated veins, a yellow chlorotic blotch spreading alongside one vein, and a few small brown necrotic specks. Razor-thin depth of field: only a narrow band along the leaf edge is sharp, everything else dissolves into creamy blur. Soft diffuse overcast daylight, high key, minimal and abstract. No text, no people."
     },
     "ojo_con_codigo": {
       "uso": "El cliche de IA. Funciona porque entra una sola vez y sobre una palabra concreta.",
@@ -70,10 +73,11 @@
       "prompt": "Cinematic still, vertical 9:16, camera following from behind. A woman seen from the back walks away down a narrow dirt path cutting through dense green summer vegetation. She wears a dark sleeveless top and shorts. Daylight filters through the overhanging leaves and dapples the path with bright patches. Shallow depth of field, she is mid-frame and small, the foliage frames her on both sides. Natural, warm, documentary feel, fine grain. No text, face not visible."
     }
   },
-
   "lo_que_no_se_genera": {
     "archivo_real": "Un hecho concreto (una foto de equipo, una entrevista, un tuit) NO se genera: generarlo seria fabricar un documento falso. O se consigue con licencia, o se sustituye por el hecho equivalente del tema propio.",
     "capturas_de_pantalla": "Se graban. Es lo mas barato y lo mas creible, y el cursor a la vista es parte de lo que lo hace creible.",
-    "el_presentador": "Se rueda. La referencia incluso se disfraza de un alter ego para romper el A-roll sin salir del set."
+    "el_presentador": "Se rueda. La referencia incluso se disfraza de un alter ego para romper el A-roll sin salir del set.",
+    "cine_comercial": "El bloque de 21.9-23.5s de la referencia son cinco microcortes de la pelicula 'Artificial' (2026, NEON). Es metraje con copyright: no se licencia como stock ni se imita copiandolo. Si tu pieza se monetiza, sustituyelo por el equivalente de tu tema.",
+    "marcas_reconocibles": "El Macintosh de apertura esta generado con IA y lleva un arcoiris deformado sobre un objeto reconocible como Apple. Eso es un problema de marca por si mismo. Al generar objetos de epoca, pide explicitamente 'no logos, no brand marks' y revisa que el modelo no haya inventado una marca a medias."
   }
 }
