@@ -407,6 +407,43 @@ def curva_suspendido(u: float, dur: float = 1.47,
     return meseta + (1 - meseta) * min(1.0, (u - fin) / (1 - fin) / 0.65) ** 2
 
 
+def curva_progresiva(u: float, dur: float, espera_s: float = 1.5) -> float:
+    """Espera en plano general y luego zoom progresivo rapido-lento.
+
+    NO es curva_suspendido. La referencia usa DOS gramaticas de movimiento
+    distintas y confundirlas es lo que me tenia atascado:
+
+      - PUNCH (curva_suspendido) en los planos normales: quieto el 85% y
+        todo el recorrido descargado en el corte. El zoom no se mira, se
+        siente.
+      - ESTE, en la foto de archivo: el zoom SI se mira, es el recurso.
+
+    Medido en su plano de la foto de grupo (12.48-14.45s, 2.04s, +16.8%):
+
+        t/T 0.00-0.41  +0.0%    quieto, 0.84s para leer la foto
+        t/T 0.48       +2.1%
+        t/T 0.54       +7.3%    arranca de golpe
+        t/T 0.67      +10.0%
+        t/T 0.74      +12.6%
+        t/T 0.80      +14.2%
+        t/T 0.87      +15.2%
+        t/T 0.93      +15.4%    ya casi parado
+
+    Los incrementos son +5.1, +2.4, +2.6, +1.6, +1.0, +0.2: easeOut. Ajustando
+    sobre esos ocho puntos, el exponente que los reproduce es 2, no 3: con
+    cubica el arranque sale demasiado adelantado (0.53 donde el mide 0.43).
+
+    OJO: motion_probe clasifica este plano como KEN BURNS, y lo hace tambien
+    con el original. Su regla ("descargar en el ultimo 15%") describe el
+    punch, no esto. Aqui la rampa repartida es lo correcto.
+    """
+    t = u * dur
+    if t <= espera_s:
+        return 0.0
+    x = (t - espera_s) / max(dur - espera_s, 1e-6)
+    return 1 - (1 - min(x, 1.0)) ** 2
+
+
 def _rotular(im, rotulo, u: float) -> None:
     """Rotulo de nombre sobre el plano, como el de la referencia.
 
@@ -435,6 +472,11 @@ def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
                 zoom_fondo_pct: float = 2.9, zoom_sujeto_pct: float = 8.9,
                 blur_min: float = 2.0, blur_max: float = 8.0,
                 base_sujeto_pct: float = 3.0, amplio_pct: float = 0.0,
+                modo: str = "punch", espera_s: float = 1.5,
+                ancla_ini: float = 0.5, ancla_fin: float = 0.5,
+                oscurecer: float = 0.0, rotulo_desde: float = 0.0,
+                escala_ini: float | None = None,
+                escala_fin: float | None = None,
                 rotulo: tuple | None = None,
                 dry: bool = False) -> None:
     """Motion graphic 2.5D: sujeto recortado sobre su fondo difuminado.
@@ -467,32 +509,68 @@ def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
     sj0 = Image.open(sujeto).convert("RGBA")
     sj0.thumbnail(tope, Image.LANCZOS)
 
-    def encuadrar(im, escala):
-        """Escala para cubrir el lienzo por `escala` y recorta al centro."""
-        f = max(W / im.width, H / im.height) * escala
-        nw, nh = max(W, int(im.width * f)), max(H, int(im.height * f))
+    def encuadrar(im, escala, ancla=0.5):
+        """Escala para cubrir el lienzo y recorta con el centro en `ancla`.
+
+        `ancla` es la altura del recorte sobre la imagen, 0 arriba y 1
+        abajo. Sin esto el recorte va siempre al centro geometrico, y en
+        una foto vertical de cuerpo entero eso corta la cabeza: el plano
+        acaba siendo torso y piernas. Con el anclaje el zoom puede empezar
+        viendo la figura entera y terminar en la cara.
+        """
+        cob = max(W / im.width, H / im.height)
+        f = cob * escala
+        nw, nh = max(1, int(im.width * f)), max(1, int(im.height * f))
         r = im.resize((nw, nh), Image.LANCZOS)
-        x, y = (nw - W) // 2, (nh - H) // 2
-        return r.crop((x, y, x + W, y + H))
+        if nw >= W and nh >= H:                      # cubre: se recorta
+            x = (nw - W) // 2
+            y = max(0, min(nh - H, int(round(ancla * nh - H / 2))))
+            return r.crop((x, y, x + W, y + H))
+        # NO cubre: la imagen cabe entera dentro del lienzo y se pega
+        # centrada sobre lo que ya hubiera debajo. Es lo que permite
+        # arrancar viendo la figura COMPLETA en un lienzo apaisado a
+        # partir de una foto vertical: sin esto el recorte 16:9 solo ve el
+        # 47% del alto y el plano general es imposible.
+        lienzo = Image.new(im.mode, (W, H), (0,) * len(im.getbands()))
+        lienzo.paste(r, ((W - nw) // 2, int(round(H / 2 - ancla * nh))))
+        return lienzo
 
     tmp = pathlib.Path(tempfile.mkdtemp(prefix="parallax_"))
     try:
         for n in range(nf):
             u = n / (nf - 1)
-            pr = curva_suspendido(u, dur, zoom_sujeto_pct)
+            pr = (curva_progresiva(u, dur, espera_s)
+                  if modo == "progresivo"
+                  else curva_suspendido(u, dur, zoom_sujeto_pct))
             # `amplio_pct` abre el plano al empezar: con 0 el sujeto ya
             # llena el cuadro desde el primer frame, que es lo que hacia
             # antes. Con un valor >0 se arranca viendo la escena entera y
             # el zoom tiene de donde venir.
             ab = 1.0 - amplio_pct / 100 * (1 - pr)
-            bg = encuadrar(bg0, ab * (1.0 + zoom_fondo_pct / 100 * pr))
+            # el encuadre viaja del plano general a la cara
+            an = ancla_ini + (ancla_fin - ancla_ini) * pr
+            bg = encuadrar(bg0, ab * (1.0 + zoom_fondo_pct / 100 * pr),
+                           0.5 if escala_ini is not None else an)
             bg = bg.filter(ImageFilter.GaussianBlur(
                 blur_min + (blur_max - blur_min) * pr))
-            sj = encuadrar(sj0, ab * ((1 + base_sujeto_pct / 100)
-                                      + zoom_sujeto_pct / 100 * pr))
+            if escala_ini is not None:
+                # recorrido explicito: de ver la figura entera a la cara
+                es = escala_ini + (escala_fin - escala_ini) * pr
+            else:
+                es = ab * ((1 + base_sujeto_pct / 100)
+                           + zoom_sujeto_pct / 100 * pr)
+            sj = encuadrar(sj0, es, an)
             bg.paste(sj, (0, 0), sj)
+            if oscurecer > 0:
+                # La referencia apaga el entorno mientras el zoom entra:
+                # es lo que aisla al sujeto del resto de la foto.
+                from PIL import ImageEnhance
+                bg = ImageEnhance.Brightness(bg).enhance(1 - oscurecer * pr)
+                bg.paste(sj, (0, 0), sj)
             if rotulo:
-                _rotular(bg, rotulo, n / (nf - 1))
+                # el nombre entra cuando el zoom ya ha aterrizado, no antes
+                _rotular(bg, rotulo, max(0.0, (pr - rotulo_desde)
+                                         / max(1 - rotulo_desde, 1e-6)))
             bg.save(tmp / f"f{n:04d}.png")
         run(["ffmpeg", "-y", "-framerate", str(FPS), "-i", str(tmp / "f%04d.png"),
              "-frames:v", str(nf), "-c:v", "libx264", "-crf", "16",

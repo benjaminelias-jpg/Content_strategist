@@ -115,6 +115,14 @@ def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
                                zoom_sujeto_pct=s.get("zoom_sujeto_pct", 14.0),
                                blur_min=s.get("blur_min", 2.0),
                                blur_max=s.get("blur_max", 8.0),
+                               modo=s.get("modo", "punch"),
+                               espera_s=s.get("espera_s", 1.5),
+                               escala_ini=s.get("escala_ini"),
+                               escala_fin=s.get("escala_fin"),
+                               ancla_ini=s.get("ancla_ini", 0.5),
+                               ancla_fin=s.get("ancla_fin", 0.5),
+                               oscurecer=s.get("oscurecer", 0.0),
+                               rotulo_desde=s.get("rotulo_desde", 0.0),
                                rotulo=tuple(s["rotulo"]) if s.get("rotulo") else None)
         elif tipo == "endcard":
             reelfx.ef_endcard(str(base), s.get("dur"))
