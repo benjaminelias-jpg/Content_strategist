@@ -26,7 +26,9 @@ import argparse
 import json
 import pathlib
 import shlex
+import shutil
 import subprocess
+import tempfile
 import sys
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
@@ -352,6 +354,84 @@ def ef_motion_card(texto: str, dst: str, dur: float = 2.0, *,
          "-i", f"color=c={fondo}:s={W}x{H}:r={FPS}:d={dur}",
          "-vf", ",".join(f), "-c:v", "libx264", "-crf", "16",
          "-preset", "medium", dst], dry)
+
+
+def curva_suspendido(u: float) -> float:
+    """Curva de velocidad del motion graphic: entrada suspendida + zoom.
+
+    Dos tramos, que es lo que se ve en la referencia:
+      - primer 35%: easeOut que recorre solo el 25% del camino. Es el "leve
+        movimiento" que da la sensacion de suspendido en el aire: la imagen
+        entra, se asienta y casi se para.
+      - resto: easeInQuart. El grueso del recorrido se descarga al final,
+        que es el principio del preset ("el zoom vive en la transicion, no
+        en el plano"). Una rampa lineal aqui delata la copia.
+    """
+    if u < 0.35:
+        return 0.25 * (1 - (1 - u / 0.35) ** 3)
+    return 0.25 + 0.75 * ((u - 0.35) / 0.65) ** 4
+
+
+def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
+                zoom_fondo_pct: float = 4.5, zoom_sujeto_pct: float = 14.0,
+                blur_min: float = 2.0, blur_max: float = 8.0,
+                base_sujeto_pct: float = 3.0, dry: bool = False) -> None:
+    """Motion graphic 2.5D: sujeto recortado sobre su fondo difuminado.
+
+    Es el recurso de la referencia: una foto fija que parece tener
+    profundidad porque el sujeto y el fondo se mueven a velocidades
+    distintas y el fondo se difumina mientras el zoom avanza.
+
+    `fondo` es la foto original; `sujeto` es el recorte con alfa.
+
+    POR QUE EL SUJETO ARRANCA MAS GRANDE QUE EL FONDO (base_sujeto_pct):
+    el fondo lleva todavia al sujeto dentro, y al difuminarlo su silueta se
+    derrama unos pixeles hacia fuera. Si el sujeto recortado empezase a la
+    misma escala, ese halo asomaria por los bordes y se veria un doble
+    contorno. Arrancando un 3% mayor queda tapado desde el primer frame.
+
+    SE COMPONE FRAME A FRAME EN PYTHON, no con expresiones de ffmpeg: la
+    curva es a trozos y gblur no acepta tiempo, asi que la alternativa era
+    una cadena de decenas de filtros habilitados por numero de frame. Aqui
+    son ~36 frames: sale mas barato y se puede comprobar valor a valor.
+    """
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    nf = max(2, int(round(dur * FPS)))
+    # se pre-reduce a ~2.5x el lienzo: el origen viene a 4000px y escalar y
+    # difuminar eso 36 veces cuesta mucho mas de lo que aporta
+    tope = (int(W * 2.5), int(H * 2.5))
+    bg0 = Image.open(fondo).convert("RGB")
+    bg0.thumbnail(tope, Image.LANCZOS)
+    sj0 = Image.open(sujeto).convert("RGBA")
+    sj0.thumbnail(tope, Image.LANCZOS)
+
+    def encuadrar(im, escala):
+        """Escala para cubrir el lienzo por `escala` y recorta al centro."""
+        f = max(W / im.width, H / im.height) * escala
+        nw, nh = max(W, int(im.width * f)), max(H, int(im.height * f))
+        r = im.resize((nw, nh), Image.LANCZOS)
+        x, y = (nw - W) // 2, (nh - H) // 2
+        return r.crop((x, y, x + W, y + H))
+
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="parallax_"))
+    try:
+        for n in range(nf):
+            u = n / (nf - 1)
+            pr = curva_suspendido(u)
+            bg = encuadrar(bg0, 1.0 + zoom_fondo_pct / 100 * pr)
+            bg = bg.filter(ImageFilter.GaussianBlur(
+                blur_min + (blur_max - blur_min) * pr))
+            sj = encuadrar(sj0, (1 + base_sujeto_pct / 100)
+                           + zoom_sujeto_pct / 100 * pr)
+            bg.paste(sj, (0, 0), sj)
+            bg.save(tmp / f"f{n:04d}.png")
+        run(["ffmpeg", "-y", "-framerate", str(FPS), "-i", str(tmp / "f%04d.png"),
+             "-frames:v", str(nf), "-c:v", "libx264", "-crf", "16",
+             "-preset", "medium", "-pix_fmt", "yuv420p", dst], dry)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def ef_endcard(dst: str, dur: float | None = None, dry: bool = False) -> None:

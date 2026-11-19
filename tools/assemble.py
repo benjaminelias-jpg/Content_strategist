@@ -100,6 +100,21 @@ def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
                                   fondo=s.get("fondo", "#0A0A0A"),
                                   color=s.get("color"),
                                   barra=s.get("barra", True))
+        elif tipo == "parallax":
+            # Motion graphic de verdad: foto fija con el sujeto recortado
+            # sobre su propio fondo difuminado, los dos moviendose a
+            # velocidades distintas. No es una tarjeta con texto.
+            for campo in ("fondo", "sujeto"):
+                if not s.get(campo):
+                    raise SystemExit(f"plano {i}: parallax sin '{campo}'")
+                if not pathlib.Path(s[campo]).exists():
+                    raise SystemExit(f"plano {i}: no existe {s[campo]}")
+            reelfx.ef_parallax(s["fondo"], s["sujeto"], str(base),
+                               s.get("dur", 1.2),
+                               zoom_fondo_pct=s.get("zoom_fondo_pct", 4.5),
+                               zoom_sujeto_pct=s.get("zoom_sujeto_pct", 14.0),
+                               blur_min=s.get("blur_min", 2.0),
+                               blur_max=s.get("blur_max", 8.0))
         elif tipo == "endcard":
             reelfx.ef_endcard(str(base), s.get("dur"))
         else:

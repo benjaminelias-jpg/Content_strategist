@@ -3,3 +3,5 @@ out/
 *.mov
 *.mp4
 !docs/evidencia/*
+__pycache__/
+*.pyc

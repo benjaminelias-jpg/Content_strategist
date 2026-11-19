@@ -32,8 +32,64 @@ def run(cmd, capturar=False):
     return p.stderr
 
 
+def pista_clicks(cortes: list[float], dur_total: float, dst: str,
+                 mudos: list[tuple[float, float]] | None = None) -> int:
+    """Construye una pista con un click seco en cada corte.
+
+    El click no se "oye": se nota. Marca el corte y hace que la transicion
+    deje de parecer un salto. Va al nivel de SFX del preset (-28 dBFS), que
+    es muy por debajo de la voz.
+
+    Dos detalles que importan:
+      - Se ALTERNAN dos variantes. Un unico sample repetido 28 veces suena a
+        metronomo; dos ya se leen como textura.
+      - Se SALTAN los tramos mudos (tarjetas blancas y cierre). El preset
+        pide "silencio total bajo la tarjeta blanca": un click ahi rompe
+        justo el efecto de parada que da la tarjeta.
+
+    Se escribe el WAV entero en numpy en vez de encadenar un adelay por
+    corte: con 28 cortes la cadena de filtros se vuelve ilegible y no hay
+    forma de comprobar donde cayo cada golpe.
+    """
+    import numpy as np
+    import wave
+
+    SR = 48000
+    banco = []
+    for nombre in ("click_a", "click_b"):
+        f = RAIZ / "assets" / "sfx" / f"{nombre}.wav"
+        if not f.exists():
+            print(f"[ aviso] falta {f.name}: la pieza sale sin clicks",
+                  file=sys.stderr)
+            return 0
+        with wave.open(str(f), "rb") as w:
+            assert w.getframerate() == SR, f"{f.name} no esta a {SR} Hz"
+            banco.append(np.frombuffer(w.readframes(w.getnframes()),
+                                       dtype=np.int16).astype(np.float32) / 32768)
+
+    pista = np.zeros(int(dur_total * SR) + SR, dtype=np.float32)
+    puestos = 0
+    for k, t in enumerate(sorted(cortes)):
+        if t <= 0.05 or t >= dur_total - 0.05:
+            continue
+        if mudos and any(a <= t < b for a, b in mudos):
+            continue
+        c = banco[k % len(banco)]
+        i = int(t * SR)
+        pista[i:i + c.size] += c
+        puestos += 1
+
+    nivel = 10 ** (PRESET["audio"]["sfx"]["nivel_dbfs"] / 20)
+    pista *= nivel / max(float(np.abs(pista).max()), 1e-9)
+    with wave.open(dst, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((np.clip(pista, -1, 1) * 32767).astype(np.int16).tobytes())
+    return puestos
+
+
 def mezclar(voz: str, musica: str, video: str, salida: str,
-            silencios: list[tuple[float, float]] | None = None) -> None:
+            silencios: list[tuple[float, float]] | None = None,
+            clicks: str | None = None) -> None:
     duck = A["ducking"]
     nivel_mus = A["cama_musical"]["nivel_relativo_voz_db"]
 
@@ -54,10 +110,21 @@ def mezclar(voz: str, musica: str, video: str, salida: str,
         f"[mus][vozsc]sidechaincompress="
         f"threshold=0.03:ratio={max(2, int(duck['reduccion_db'] / 2))}:"
         f"attack={duck['ataque_ms']}:release={duck['liberacion_ms']}[musduck];"
-        f"[vozmix][musduck]amix=inputs=2:duration=first:dropout_transition=0,"
-        f"loudnorm=I=-22:TP=-1.5:LRA=11[a]"
+        f"[vozmix][musduck]amix=inputs=2:duration=first:dropout_transition=0[vm];"
     )
-    run(["ffmpeg", "-y", "-i", video, "-i", voz, "-i", musica,
+    entradas = ["-i", video, "-i", voz, "-i", musica]
+    if clicks:
+        # Los clicks entran DESPUES del amix de voz y musica y NO pasan por
+        # el ducking: son los que marcan el corte, y agacharlos con la voz
+        # los borraria justo donde hacen falta.
+        entradas += ["-i", clicks]
+        fc += (f"[3:a]aformat=sample_fmts=fltp:sample_rates=44100:"
+               f"channel_layouts=stereo[clk];"
+               f"[vm][clk]amix=inputs=2:duration=first:dropout_transition=0,"
+               f"loudnorm=I=-22:TP=-1.5:LRA=11[a]")
+    else:
+        fc += "[vm]loudnorm=I=-22:TP=-1.5:LRA=11[a]"
+    run(["ffmpeg", "-y", *entradas,
          "-filter_complex", fc, "-map", "0:v", "-map", "[a]",
          "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", salida])
 
@@ -128,6 +195,10 @@ def main() -> None:
     ap.add_argument("--salida")
     ap.add_argument("--silencios", help="tramos a silenciar la musica, "
                                         "p.ej. 17.5-18.0,25.3-26.0")
+    ap.add_argument("--clicks", help="segundos de los cortes, separados por "
+                                     "coma: pone un click seco en cada uno, "
+                                     "al nivel de SFX del preset. Se saltan "
+                                     "los tramos de --silencios")
     a = ap.parse_args()
 
     if a.qc:
@@ -140,7 +211,22 @@ def main() -> None:
     if a.silencios:
         sil = [tuple(float(x) for x in t.split("-"))
                for t in a.silencios.split(",")]
-    mezclar(a.voz, a.musica, a.video, a.salida, sil)
+    pista = None
+    if a.clicks:
+        dur = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", a.video], capture_output=True,
+            text=True).stdout or 0)
+        pista = str(pathlib.Path(a.salida).with_suffix(".clicks.wav"))
+        cortes = [float(x) for x in a.clicks.split(",") if x.strip()]
+        n = pista_clicks(cortes, dur, pista, sil)
+        print(f"clicks: {n} de {len(cortes)} cortes "
+              f"({len(cortes) - n} caen en tramo mudo o en los bordes), "
+              f"a {PRESET['audio']['sfx']['nivel_dbfs']} dBFS", file=sys.stderr)
+        if n == 0:
+            pista = None
+
+    mezclar(a.voz, a.musica, a.video, a.salida, sil, pista)
     print(f"\nlisto: {a.salida}", file=sys.stderr)
     qc(a.salida)
 
