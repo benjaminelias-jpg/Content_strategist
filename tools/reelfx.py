@@ -392,14 +392,28 @@ def ef_captions(src: str, dst: str, plan_path: str, fuente: str | None = None,
         col = w.get("color", PRESET["paleta"]["texto_sobre_oscuro"])
         txt = str(w["palabra"]).replace("'", "’").replace(":", "\\:")
         ff = fuente_it if w.get("italica") else fuente
-        d = (f"drawtext=text='{txt}':fontsize={size}:fontcolor={col}"
-             f":x={w['x']}*w-text_w/2:y={y}*h-text_h/2"
-             f":shadowcolor=black@{som['opacidad']}:shadowx={som['desplazamiento_px_1080'][0]}"
-             f":shadowy={som['desplazamiento_px_1080'][1]}"
-             f":enable='between(t,{w['t_in']},{w['t_out']})'")
-        if ff:
-            d += f":fontfile={ff}"
-        partes.append(d)
+        base = (f"fontsize={size}:y={y}*h-text_h/2"
+                f":enable='between(t,{w['t_in']},{w['t_out']})'"
+                + (f":fontfile={ff}" if ff else ""))
+
+        if w.get("rgbsplit"):
+            # Subrayado de la referencia: separacion RGB sobre el texto, no un
+            # cambio de color. Medido en el original: cian en el borde
+            # izquierdo y naranja en el derecho, -3px y +4px sobre 960 de
+            # ancho. Se consigue dibujando la palabra tres veces: cian
+            # desplazada a la izquierda, naranja a la derecha, y blanca encima,
+            # que tapa el centro y deja solo los flecos de color.
+            dx = max(2, round(3.5 * W / 960))
+            for color, off in (("#00E5FF", -dx), ("#FF7A1A", dx), (col, 0)):
+                partes.append(f"drawtext=text='{txt}':fontcolor={color}"
+                              f":x={w['x']}*w-text_w/2+{off}:{base}")
+            continue
+
+        partes.append(f"drawtext=text='{txt}':fontcolor={col}"
+                      f":x={w['x']}*w-text_w/2:{base}"
+                      f":shadowcolor=black@{som['opacidad']}"
+                      f":shadowx={som['desplazamiento_px_1080'][0]}"
+                      f":shadowy={som['desplazamiento_px_1080'][1]}")
 
     vf = _fit() + ("," + ",".join(partes) if partes else "")
     run(["ffmpeg", "-y", "-i", src, "-vf", vf, "-r", str(FPS),
@@ -416,7 +430,10 @@ def _buscar_fuente(italica: bool = False, bitmap: bool = False) -> str | None:
         cands = ["PlayfairDisplay-Italic", "EBGaramond-Italic", "DejaVuSerif-Italic",
                  "DejaVuSans-Oblique"]
     else:
-        cands = ["Inter", "HelveticaNow", "Satoshi", "DejaVuSans-Bold", "DejaVuSans"]
+        # Inter600 primero: es la sustituta libre mas cercana a SF Pro, que
+        # es la familia a la que se parece la tipografia de la referencia.
+        cands = ["Inter600", "Inter700", "Inter", "HelveticaNow", "Satoshi",
+                 "DejaVuSans-Bold", "DejaVuSans"]
     locales = (RAIZ / "assets" / "fonts")
     for c in cands:
         for ext in (".ttf", ".otf"):

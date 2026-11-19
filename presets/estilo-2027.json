@@ -9,15 +9,16 @@
     "archivo_analizado": "78ab5df7-En_2027_el_criterio....mp4",
     "nota_medicion": "Todas las medidas se tomaron sobre una copia 960x720 @29.97fps (76.34s, 2288 frames). Las posiciones estan normalizadas 0-1, asi que son validas para cualquier lienzo. Los valores en px que aparecen comentados estan traducidos al master 1080x1920."
   },
-
   "lienzo": {
     "ancho": 1080,
     "alto": 1920,
     "fps": 30,
     "espacio_color": "bt709",
-    "duracion_objetivo_s": [60, 90]
+    "duracion_objetivo_s": [
+      60,
+      90
+    ]
   },
-
   "ritmo": {
     "cortes_totales_referencia": 53,
     "duracion_media_plano_s": 1.44,
@@ -31,18 +32,30 @@
       "remate": "2.5-4.0s por plano"
     }
   },
-
   "tipografia": {
     "primaria": {
       "familia": "Helvetica Now Display",
-      "alternativas_libres": ["Inter Display", "Satoshi", "General Sans"],
-      "pesos": [500, 600, 700],
+      "alternativas_libres": [
+        "Inter 600 (la mas cercana a SF Pro)",
+        "Inter Display",
+        "Satoshi",
+        "General Sans"
+      ],
+      "pesos": [
+        500,
+        600,
+        700
+      ],
       "tracking_em": -0.015,
       "caso": "minuscula salvo rotulos de fecha"
     },
     "acento": {
       "familia": "serif italica didone",
-      "alternativas_libres": ["Playfair Display Italic", "Instrument Serif Italic", "EB Garamond Italic"],
+      "alternativas_libres": [
+        "Playfair Display Italic",
+        "Instrument Serif Italic",
+        "EB Garamond Italic"
+      ],
       "uso": "1-2 palabras por pieza, nunca mas. Marca el giro conceptual: 'repetible', 'ia', 'Loading...'"
     },
     "rotulo_fecha": {
@@ -59,29 +72,96 @@
       "heroe": 18.47
     },
     "escalas_px_en_1080x1920": {
-      "normal": { "alto_caja": 83, "font_size_aprox": 115 },
-      "enfasis": { "alto_caja": 208, "font_size_aprox": 290 },
-      "heroe": { "alto_caja": 355, "font_size_aprox": 490 }
+      "normal": {
+        "alto_caja": 83,
+        "font_size_aprox": 115
+      },
+      "enfasis": {
+        "alto_caja": 208,
+        "font_size_aprox": 290
+      },
+      "heroe": {
+        "alto_caja": 355,
+        "font_size_aprox": 490
+      }
     },
     "sombra": {
       "tipo": "drop shadow suave",
       "color": "#000000",
       "opacidad": 0.35,
       "desenfoque_px_1080": 18,
-      "desplazamiento_px_1080": [0, 4],
+      "desplazamiento_px_1080": [
+        0,
+        4
+      ],
       "razon": "Despega el texto del b-roll sin que se lea como sombra."
+    },
+    "subrayado": {
+      "que_es": "SEPARACION RGB sobre el texto, no un cambio de color. Cian en el borde izquierdo y naranja en el derecho.",
+      "medido_en_960": {
+        "canal_R_px": -3,
+        "canal_B_px": 4
+      },
+      "como_se_hace": "Se dibuja la palabra tres veces: cian desplazada a la izquierda, naranja a la derecha, y blanca encima, que tapa el centro y deja solo los flecos.",
+      "aparicion_referencia": "10.9s, sobre \"sin precedentes\"",
+      "nota": "El rojo como color de enfasis que figuraba antes en la paleta era una invencion mia, no estaba medido. El subrayado real de la pieza es este."
     }
   },
-
   "rejilla_subtitulos": {
     "linea_base_y": 0.505,
-    "banda_y": [0.40, 0.60],
-    "x_dispersion": { "p10": 0.20, "mediana": 0.50, "p90": 0.78 },
+    "banda_y": [
+      0.4,
+      0.6
+    ],
+    "x_dispersion": {
+      "p10": 0.2,
+      "mediana": 0.5,
+      "p90": 0.78
+    },
     "regla": "Las palabras NO van centradas ni en lower-third: se esparcen horizontalmente sobre una linea central unica (~50.5% de alto). Cada palabra nueva aparece en una X distinta y las anteriores se quedan en pantalla hasta que se limpia la frase.",
     "palabras_simultaneas_max": 4,
-    "limpieza": "La frase se borra de golpe en el corte, no se desvanece palabra a palabra."
+    "limpieza": "La frase se borra de golpe en el corte, no se desvanece palabra a palabra.",
+    "palabras_grandes_van_centradas": {
+      "regla": "Las palabras en escala enfasis y heroe NO se esparcen: van CENTRADAS. Medido sobre la referencia, su centro en x cae entre 0.501 y 0.512 en los cinco casos. La dispersion p10=0.20 / p90=0.78 es de las palabras PEQUENAS, no de todas: esparcirlas todas es lo que hace que las posiciones se lean incoherentes.",
+      "medido": [
+        {
+          "t": 10.9,
+          "palabra": "sin precedentes",
+          "centro_x": 0.512,
+          "centro_y": 0.51,
+          "alto_pct": 12.5
+        },
+        {
+          "t": 35.3,
+          "palabra": "nuevo",
+          "centro_x": 0.505,
+          "centro_y": 0.525,
+          "alto_pct": 13.6
+        },
+        {
+          "t": 48.3,
+          "palabra": "queres",
+          "centro_x": 0.501,
+          "centro_y": 0.666,
+          "alto_pct": 8.8
+        },
+        {
+          "t": 55.2,
+          "palabra": "rapido",
+          "centro_x": 0.502,
+          "centro_y": 0.515,
+          "alto_pct": 7.9
+        },
+        {
+          "t": 67.3,
+          "palabra": "mas",
+          "centro_x": 0.503,
+          "centro_y": 0.52,
+          "alto_pct": 11.0
+        }
+      ]
+    }
   },
-
   "paleta": {
     "texto_sobre_oscuro": "#FFFFFF",
     "texto_sobre_claro": "#030303",
@@ -94,7 +174,6 @@
     "endcard_logo": "#D8D8D8",
     "uso_color": "Blanco por defecto. UN color por pieza como maximo, sobre la palabra que carga el conflicto."
   },
-
   "transiciones": {
     "flash_negativo": {
       "descripcion": "Inversion RGB completa del compuesto (incluido el texto) mantenida en duro y cortada en seco.",
@@ -102,7 +181,9 @@
       "duracion_s": 0.2,
       "rampa": "ninguna - entra y sale en duro",
       "capa": "ajuste por encima de TODO, texto incluido",
-      "apariciones_referencia": ["5.74-5.94s"],
+      "apariciones_referencia": [
+        "5.74-5.94s"
+      ],
       "cuando": "Cierre de una idea antes de abrir la contraria. Maximo 1-2 por pieza."
     },
     "whip_blur": {
@@ -111,7 +192,9 @@
       "angulo_grados": 115,
       "fuerza_px_1080": 110,
       "ganancia_luma": 1.25,
-      "apariciones_referencia": ["32.53-32.60s"],
+      "apariciones_referencia": [
+        "32.53-32.60s"
+      ],
       "cuando": "Jump cut dentro del mismo encuadre de A-roll."
     },
     "zoom_blur_cut": {
@@ -121,17 +204,28 @@
       "zoom_extra_salida_pct": 7.0,
       "blur_max_px_1080": 26,
       "curva": "easeInQuart a la salida, easeOutQuart a la entrada",
-      "apariciones_referencia": ["13.55s", "14.45s"],
+      "apariciones_referencia": [
+        "13.55s",
+        "14.45s"
+      ],
       "cuando": "Cambio de bloque narrativo o salto temporal."
     },
     "tarjeta_blanca": {
       "descripcion": "Corte a blanco puro con texto negro pequeno en la linea central. No es un flash: se sostiene.",
       "fondo": "#FDFDFD",
       "texto": "#030303",
-      "duraciones_referencia_s": [0.47, 0.67, 1.73],
+      "duraciones_referencia_s": [
+        0.47,
+        0.67,
+        1.73
+      ],
       "entrada": "corte en duro",
       "salida": "corte en duro",
-      "apariciones_referencia": ["17.58-18.02s", "25.36-25.99s", "60.33-62.06s"],
+      "apariciones_referencia": [
+        "17.58-18.02s",
+        "25.36-25.99s",
+        "60.33-62.06s"
+      ],
       "cuando": "Respiro y reinicio. Baja el pulso antes de subir otra vez."
     },
     "corte_seco": {
@@ -139,20 +233,38 @@
       "proporcion": 0.9
     }
   },
-
   "movimiento": {
     "principio": "EL ZOOM VIVE EN LA TRANSICION, NO EN EL PLANO. Este es el hallazgo central del analisis y lo que mas se imita mal. El plano esta quieto el 85% de su duracion y todo el recorrido se descarga en los ~5 frames previos al corte. No existe el Ken Burns lento y parejo en esta pieza.",
     "evidencia": "Curva normalizada del plano 19 (14.45-15.92s): sube a 3.04% en t/T=0.09, se queda CLAVADA en 3.84% de 0.18 a 0.82, y vuelve a subir a 6.70% en 0.91. Los dos escalones son las rampas de transicion de entrada y salida; el cuerpo del plano es plano. Los planos 17 y 24 repiten el patron sin el escalon de entrada.",
     "punch_zoom": {
-      "recorrido_total_pct": [6.0, 11.0],
+      "recorrido_total_pct": [
+        6.0,
+        11.0
+      ],
       "fraccion_plano_en_reposo": 0.85,
       "fraccion_plano_en_movimiento": 0.15,
       "curva": "easeInQuart",
       "nota": "Es la rampa de salida de zoom_blur_cut vista desde el plano. Si se aplica zoom_blur_cut no se aplica ademas punch_zoom: es el mismo movimiento contado dos veces.",
       "medido_en_referencia": [
-        { "plano": 17, "t": "12.48-13.55", "total_pct": 7.94, "reposo_hasta": 0.84 },
-        { "plano": 19, "t": "14.45-15.92", "total_pct": 10.69, "reposo_hasta": 0.82, "nota": "escalones en ambos extremos = transicion a los dos lados" },
-        { "plano": 24, "t": "21.89-23.52", "total_pct": 6.96, "reposo_hasta": 0.82 }
+        {
+          "plano": 17,
+          "t": "12.48-13.55",
+          "total_pct": 7.94,
+          "reposo_hasta": 0.84
+        },
+        {
+          "plano": 19,
+          "t": "14.45-15.92",
+          "total_pct": 10.69,
+          "reposo_hasta": 0.82,
+          "nota": "escalones en ambos extremos = transicion a los dos lados"
+        },
+        {
+          "plano": 24,
+          "t": "21.89-23.52",
+          "total_pct": 6.96,
+          "reposo_hasta": 0.82
+        }
       ]
     },
     "punch_rafaga": {
@@ -169,7 +281,6 @@
       "regla": "El b-roll generado/stock ya trae dolly o drone (hasta -55% de recorrido). No se le anade zoom encima: se elige por su movimiento."
     }
   },
-
   "pixel_crt": {
     "texto_pixelado": {
       "descripcion": "Palabra clave en fuente bitmap gigante, DETRAS del sujeto (mascara del cuerpo), con scanlines y bloom.",
@@ -177,23 +288,49 @@
       "bloque_pct_ancho": 0.0177,
       "color_cuerpo": "#DFE87F",
       "color_bloom": "#FFFFB3",
-      "scanlines": { "periodo_px_en_960": 2, "opacidad": 0.45 },
-      "bloom": { "radio_px_1080": 28, "intensidad": 0.6 },
+      "scanlines": {
+        "periodo_px_en_960": 2,
+        "opacidad": 0.45
+      },
+      "bloom": {
+        "radio_px_1080": 28,
+        "intensidad": 0.6
+      },
       "profundidad": "detras del sujeto - requiere mascara/rotoscopia del cuerpo",
       "aparicion_referencia": "2.17-4.34s",
-      "fuentes_bitmap": ["Silkscreen", "Press Start 2P", "Pixelify Sans", "VT323"]
+      "fuentes_bitmap": [
+        "Silkscreen",
+        "Press Start 2P",
+        "Pixelify Sans",
+        "VT323"
+      ]
     },
     "pantalla_crt": {
       "descripcion": "Texto incrustado en un monitor viejo dentro del plano.",
-      "aberracion_cromatica_px_en_960": { "r": [2, 0], "g": [0, 0], "b": [-2, 1] },
-      "scanlines": { "periodo_px_en_960": 2, "opacidad": 0.35 },
+      "aberracion_cromatica_px_en_960": {
+        "r": [
+          2,
+          0
+        ],
+        "g": [
+          0,
+          0
+        ],
+        "b": [
+          -2,
+          1
+        ]
+      },
+      "scanlines": {
+        "periodo_px_en_960": 2,
+        "opacidad": 0.35
+      },
       "barril": 0.08,
       "vineta": 0.45,
       "bloom": 0.35,
       "aparicion_referencia": "0.00-2.17s"
     }
   },
-
   "audio": {
     "cama_musical": {
       "presencia": "continua, sin huecos hasta 75.68s",
@@ -203,33 +340,88 @@
     },
     "voz": {
       "nivel_objetivo_dbfs": -22,
-      "rango_medido_dbfs": [-25.4, -21.9],
+      "rango_medido_dbfs": [
+        -25.4,
+        -21.9
+      ],
       "procesado": "compresion suave + de-esser; el master rinde ~-22 LUFS integrado"
     },
-    "ducking": { "reduccion_db": 9, "ataque_ms": 40, "liberacion_ms": 280 },
+    "ducking": {
+      "reduccion_db": 9,
+      "ataque_ms": 40,
+      "liberacion_ms": 280
+    },
     "sfx": {
       "uso": "whoosh corto en el whip_blur, impacto seco en el flash_negativo, silencio total bajo la tarjeta blanca",
       "nivel_dbfs": -28
     },
-    "cola": { "ultimos_s": 0.64, "accion": "silencio bajo el endcard" }
+    "cola": {
+      "ultimos_s": 0.64,
+      "accion": "silencio bajo el endcard"
+    }
   },
-
   "endcard": {
     "duracion_s": 2.87,
     "fondo": "#000000",
-    "logo": { "forma": "diana concentrica", "color": "#D8D8D8", "diametro_pct_ancho": 0.14, "posicion": [0.5, 0.5] },
+    "logo": {
+      "forma": "diana concentrica",
+      "color": "#D8D8D8",
+      "diametro_pct_ancho": 0.14,
+      "posicion": [
+        0.5,
+        0.5
+      ]
+    },
     "movimiento": "deriva minima, casi quieto",
     "audio": "silencio"
   },
-
   "broll": {
-    "proporcion_pantalla": { "a_roll": 0.55, "b_roll": 0.45 },
+    "proporcion_pantalla": {
+      "a_roll": 0.55,
+      "b_roll": 0.45
+    },
     "familias": [
-      { "tipo": "archivo_real", "ejemplos": ["foto de equipo OpenAI 2022", "entrevista Sam Altman", "tuit '1 million users'"], "razon": "Ancla la afirmacion en un hecho verificable." },
-      { "tipo": "captura_pantalla", "ejemplos": ["UI de ChatGPT en navegador", "seleccion de texto con cursor visible"], "razon": "Prueba de primera mano, se graba uno mismo." },
-      { "tipo": "macro_textura", "ejemplos": ["hoja", "reloj", "ojo con codigo reflejado"], "razon": "Metafora abstracta para conceptos sin imagen." },
-      { "tipo": "humano_en_escala", "ejemplos": ["figura ante un lago", "mujer caminando por un sendero"], "razon": "Puerta emocional antes del remate." },
-      { "tipo": "objeto_de_epoca", "ejemplos": ["Macintosh clasico con pantalla CRT"], "razon": "Abre la pieza situandola en el tiempo." }
+      {
+        "tipo": "archivo_real",
+        "ejemplos": [
+          "foto de equipo OpenAI 2022",
+          "entrevista Sam Altman",
+          "tuit '1 million users'"
+        ],
+        "razon": "Ancla la afirmacion en un hecho verificable."
+      },
+      {
+        "tipo": "captura_pantalla",
+        "ejemplos": [
+          "UI de ChatGPT en navegador",
+          "seleccion de texto con cursor visible"
+        ],
+        "razon": "Prueba de primera mano, se graba uno mismo."
+      },
+      {
+        "tipo": "macro_textura",
+        "ejemplos": [
+          "hoja",
+          "reloj",
+          "ojo con codigo reflejado"
+        ],
+        "razon": "Metafora abstracta para conceptos sin imagen."
+      },
+      {
+        "tipo": "humano_en_escala",
+        "ejemplos": [
+          "figura ante un lago",
+          "mujer caminando por un sendero"
+        ],
+        "razon": "Puerta emocional antes del remate."
+      },
+      {
+        "tipo": "objeto_de_epoca",
+        "ejemplos": [
+          "Macintosh clasico con pantalla CRT"
+        ],
+        "razon": "Abre la pieza situandola en el tiempo."
+      }
     ],
     "regla_oro": "Cada b-roll entra sobre una palabra concreta, no sobre una frase. Si la palabra no tiene imagen, va tarjeta blanca."
   }
