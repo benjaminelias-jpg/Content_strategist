@@ -31,6 +31,8 @@ import subprocess
 import tempfile
 import sys
 
+from PIL import Image
+
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 PRESET = json.loads((RAIZ / "presets" / "estilo-2027.json").read_text(encoding="utf-8"))
 
@@ -357,25 +359,70 @@ def ef_motion_card(texto: str, dst: str, dur: float = 2.0, *,
 
 
 def curva_suspendido(u: float) -> float:
-    """Curva de velocidad del motion graphic: entrada suspendida + zoom.
+    """Curva de velocidad del motion graphic, medida en la referencia.
 
-    Dos tramos, que es lo que se ve en la referencia:
-      - primer 35%: easeOut que recorre solo el 25% del camino. Es el "leve
-        movimiento" que da la sensacion de suspendido en el aire: la imagen
-        entra, se asienta y casi se para.
-      - resto: easeInQuart. El grueso del recorrido se descarga al final,
-        que es el principio del preset ("el zoom vive en la transicion, no
-        en el plano"). Una rampa lineal aqui delata la copia.
+    Sacada del plano de la entrevista (14.45-15.92s, 1.47s, +8.9% de zoom),
+    midiendo frame a frame. La curva real es MUCHO mas brusca de lo que
+    parece a ojo:
+
+        t/T 0.09 -> +2.77%   ya lleva el 31% del recorrido
+        t/T 0.22 -> +2.97%
+        t/T 0.48 -> +3.31%   clavado
+        t/T 0.80 -> +3.31%   sigue clavado
+        t/T 0.87 -> +4.88%
+        t/T 0.93 -> +10.2%
+
+    Es decir: un tiron corto al entrar que coloca un tercio del recorrido,
+    una meseta de casi dos tercios del plano donde NO SE MUEVE, y el 63%
+    restante descargado en el ultimo 13%.
+
+    La primera version de esta funcion repartia el tiron en el 35% inicial
+    y llegaba al 25% del recorrido. Comparada con la medida, entraba lenta
+    y se movia durante la meseta. Es justo lo que delata una imitacion: la
+    meseta tiene que estar MUERTA.
     """
-    if u < 0.35:
-        return 0.25 * (1 - (1 - u / 0.35) ** 3)
-    return 0.25 + 0.75 * ((u - 0.35) / 0.65) ** 4
+    if u < 0.10:
+        return 0.31 * (1 - (1 - u / 0.10) ** 3)      # tiron de entrada
+    if u < 0.40:
+        return 0.31 + 0.06 * (u - 0.10) / 0.30       # acaba de asentarse
+    if u < 0.80:
+        return 0.37                                  # meseta MUERTA
+    # Descarga: cuadratica que pasa por los dos puntos medidos (0.87 -> 0.55
+    # y 0.93 -> 1.00) y queda arriba. El zoom TERMINA en t/T=0.93, no en el
+    # ultimo frame: los tres ultimos frames ya estan quietos en su destino,
+    # y ese reposo es lo que hace que el corte golpee.
+    return 0.37 + 0.63 * min(1.0, (u - 0.80) / 0.13) ** 2
+
+
+def _rotular(im, rotulo, u: float) -> None:
+    """Rotulo de nombre sobre el plano, como el de la referencia.
+
+    En el original la persona de archivo viene identificada con nombre y
+    cargo abajo a la izquierda. Sin eso el plano es "un senor"; con eso es
+    una cita. Entra con un fundido corto y se queda.
+    """
+    from PIL import ImageDraw, ImageFont
+    nombre, cargo = rotulo
+    alfa = min(1.0, u / 0.12)                      # fundido de entrada
+    f1 = _buscar_fuente(); f2 = _buscar_fuente(italica=True)
+    s1 = int(H * 0.034); s2 = int(s1 * 0.62)   # el cargo a 0.46 no se leia
+    fn = ImageFont.truetype(f1, s1) if f1 else ImageFont.load_default()
+    fc = ImageFont.truetype(f2, s2) if f2 else ImageFont.load_default()
+    x, y = int(W * 0.065), int(H * 0.80)
+    capa = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(capa)
+    blanco = (255, 255, 255, int(255 * alfa))
+    d.text((x, y), nombre, font=fn, fill=blanco)
+    d.text((x, y + int(s1 * 1.24)), cargo, font=fc,
+           fill=(255, 255, 255, int(232 * alfa)))
+    im.paste(Image.alpha_composite(im.convert("RGBA"), capa).convert("RGB"), (0, 0))
 
 
 def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
-                zoom_fondo_pct: float = 4.5, zoom_sujeto_pct: float = 14.0,
+                zoom_fondo_pct: float = 2.9, zoom_sujeto_pct: float = 8.9,
                 blur_min: float = 2.0, blur_max: float = 8.0,
-                base_sujeto_pct: float = 3.0, dry: bool = False) -> None:
+                base_sujeto_pct: float = 3.0, rotulo: tuple | None = None,
+                dry: bool = False) -> None:
     """Motion graphic 2.5D: sujeto recortado sobre su fondo difuminado.
 
     Es el recurso de la referencia: una foto fija que parece tener
@@ -395,8 +442,7 @@ def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
     una cadena de decenas de filtros habilitados por numero de frame. Aqui
     son ~36 frames: sale mas barato y se puede comprobar valor a valor.
     """
-    import numpy as np
-    from PIL import Image, ImageFilter
+    from PIL import ImageFilter
 
     nf = max(2, int(round(dur * FPS)))
     # se pre-reduce a ~2.5x el lienzo: el origen viene a 4000px y escalar y
@@ -426,6 +472,8 @@ def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
             sj = encuadrar(sj0, (1 + base_sujeto_pct / 100)
                            + zoom_sujeto_pct / 100 * pr)
             bg.paste(sj, (0, 0), sj)
+            if rotulo:
+                _rotular(bg, rotulo, n / (nf - 1))
             bg.save(tmp / f"f{n:04d}.png")
         run(["ffmpeg", "-y", "-framerate", str(FPS), "-i", str(tmp / "f%04d.png"),
              "-frames:v", str(nf), "-c:v", "libx264", "-crf", "16",

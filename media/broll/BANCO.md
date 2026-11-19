@@ -115,3 +115,41 @@ contraste alto y su media baja es justo el efecto.
 Lo que hay que medir no es la media sino **si el plano tiene altas** (p95 >=
 120): eso es lo que distingue un low-key de un plano embarrado. La media sola
 descarta precisamente el material mas aesthetic.
+
+## Archivo de persona real: Sam Altman
+
+La referencia usa metraje de Altman. El catalogo de stock NO lo tiene: buscar
+"Sam Altman OpenAI CEO" devuelve senores de negocios genericos, varios
+generados por IA. Es una biblioteca royalty-free con cesion de imagen de
+modelos, no una agencia editorial. Las fotos reales estan en Getty, AP y
+Reuters, cuya licencia editorial **prohibe el uso promocional**, que es lo que
+es un reel de marca.
+
+La via que si sirve es **Wikimedia Commons**: hay 21 ficheros de Altman y la
+mayoria son **CC BY 2.0**, que permite uso comercial a cambio de atribucion.
+
+| | |
+|---|---|
+| fichero | `Sam Altman November 2022.jpg` |
+| autor | Village Global |
+| licencia | CC BY 2.0 — https://creativecommons.org/licenses/by/2.0 |
+| restricciones | ninguna |
+| pagina | https://commons.wikimedia.org/wiki/File:Sam_Altman_November_2022.jpg |
+
+Se eligio esa y no otra porque **es de noviembre de 2022**, el mes del
+lanzamiento de ChatGPT, que es de lo que habla el plano en la referencia.
+
+**La atribucion hay que ponerla al publicar**: "Sam Altman, foto de Village
+Global, CC BY 2.0" en la descripcion del post. Sin eso la licencia no se
+cumple. Y dos avisos que no son de copyright: usar la imagen de una persona
+real en contenido promocional tiene ademas derechos de imagen, y conviene que
+la pieza no sugiera que respalda el producto.
+
+### Como descargar de Commons
+
+`upload.wikimedia.org` devuelve **429** al original y pide usar los **tamanos
+de miniatura estandar**. La URL que funciona es la de thumb:
+
+```
+https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Sam_Altman_November_2022.jpg/1920px-Sam_Altman_November_2022.jpg
+```
