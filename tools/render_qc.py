@@ -208,13 +208,23 @@ def main() -> None:
         # superior; con un primer plano que llena el cuadro, esa linea taparia
         # la cara y hay que bajarla. Lo que delata un mal montaje es que las
         # palabras no compartan linea, no que la linea este mas abajo.
-        q25, q75 = float(np.percentile(ys, 25)), float(np.percentile(ys, 75))
-        disp_y = q75 - q25
-        add(OK if disp_y < 0.22 else FALLO,
+        # Coherencia = pocas alturas distintas y bien pobladas, no una sola.
+        # Dos lineas a proposito (una centrada sobre b-roll y otra mas baja
+        # sobre el A-roll, para no tapar la cara) es un diseno coherente; lo
+        # que no lo es son muchas alturas sueltas. Antes esto se media con el
+        # rango intercuartil y penalizaba el diseno de dos lineas.
+        from collections import Counter
+        niveles = Counter(round(v, 2) for v in ys)
+        dominantes = [v for v, c in niveles.items() if c >= max(2, len(ys) * 0.08)]
+        cubre = sum(c for v, c in niveles.items() if v in dominantes) / max(1, len(ys))
+        coherente = len(dominantes) <= 3 and cubre >= 0.85
+        add(OK if coherente else FALLO,
             "coherencia de la linea",
-            f"mediana y={my:.3f}, rango intercuartil {disp_y:.3f}. "
-            + ("las palabras comparten linea" if disp_y < 0.22 else
-               "las palabras no comparten linea: se leen como colocadas al azar")
+            f"mediana y={my:.3f}, {len(dominantes)} altura(s) dominante(s) "
+            f"{sorted(dominantes)} que cubren el {cubre*100:.0f}% de las palabras. "
+            + ("las palabras se reparten entre pocas lineas previsibles"
+               if coherente else
+               "demasiadas alturas sueltas: se leen como colocadas al azar")
             + f" (la referencia usa {g['linea_base_y']}, valida cuando el sujeto "
               f"va en el tercio superior)"
             + ("" if exacto else "  [estimado por pixeles: poco fiable, "
