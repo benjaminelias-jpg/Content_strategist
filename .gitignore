@@ -3,3 +3,7 @@ out/
 *.mov
 *.mp4
 !docs/evidencia/*
+
+# los paquetes de vendor/ generan esto al instalarse en modo editable
+__pycache__/
+*.egg-info/

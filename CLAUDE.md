@@ -30,13 +30,42 @@ Para consultar un parámetro concreto, **`reel-adn-estilo`** tiene la ficha comp
 presets/estilo-2027.json     todas las medidas, legibles por máquina
 docs/analisis-reel-2027.md   el porqué de cada número, con la evidencia
 docs/evidencia/              hojas de contacto y tiras de la referencia
-.claude/skills/              las ocho skills
+.claude/skills/              las nueve skills propias + las tres vendorizadas
 .claude/agents/              los cinco agentes paralelizables
 tools/                       los renderizadores
+vendor/                      earshot y rea-video, copiados (ver vendor/README.md)
 ```
 
 **`presets/estilo-2027.json` es la única fuente de verdad de los parámetros.** Si cambias
 un valor, cámbialo ahí: las herramientas lo leen en tiempo de ejecución.
+
+## Las dos capacidades prestadas
+
+En `vendor/` viven dos proyectos de terceros que cubren lo que este repo no sabía hacer solo.
+Se instalan con `tools/vendor_install.sh` y traen sus propias skills, ya cargadas.
+
+**`rea-video` mide una referencia por ti.** El ADN del reel "2027" se sacó a mano, fotograma a
+fotograma, y por eso sólo hay un preset. Con `rea-video decompose` cualquier vídeo de referencia
+sale desmontado plano a plano: cómo se hizo cada uno, qué lleva encima, dónde cae cada corte
+contra la voz y la música, y qué haría falta para replicarlo. Es el camino para un
+`presets/estilo-<loquesea>.json` nuevo sin repetir el trabajo manual. No sustituye al preset:
+produce la evidencia con la que se escribe.
+
+**`earshot` te da oídos.** Hasta ahora el audio se verificaba con números de nivel —LUFS, picos,
+ducking— que dicen si la mezcla está bien puesta, no si suena bien. earshot describe un audio en
+palabras, lo puntúa contra una descripción ("¿esto suena a whoosh corto y oscuro?"), distingue
+una grabación real de algo sintetizado y trae un banco de 252 efectos escritos en código. La
+skill `real-sound` va más allá y monta la banda sonora entera a partir de grabaciones con
+licencia comprobada, que es justo lo que pide la regla de más abajo.
+
+Dos advertencias que no conviene descubrir a mitad de un montaje:
+
+- **La skill `rea-video` está escrita en chino.** Funciona igual y el informe sale en el idioma en
+  que preguntes (`--lang es`), pero si la lees directamente, la leerás en chino.
+- **La primera ejecución de cada una necesita red** para bajar sus modelos. Después, no.
+
+Ninguna de las dos manda sobre `presets/estilo-2027.json`. Siguen siendo fuentes de evidencia:
+lo que midan entra en el preset cuando alguien lo decide, no automáticamente.
 
 ## Herramientas
 
@@ -49,8 +78,11 @@ un valor, cámbialo ahí: las herramientas lo leen en tiempo de ejecución.
 | `tools/audiomix.py` | mezcla y audita el audio |
 | `tools/wordmap.py` | mapa de palabras con tiempos |
 | `tools/compose.py` | texto pixelado detrás del sujeto (matte + apilado) |
+| `tools/vendor_refresh.sh` | recopia `vendor/` y sus skills desde los commits fijados |
+| `tools/vendor_install.sh` | instala earshot y rea-video (necesita ffmpeg) |
 
 Dependencias: `ffmpeg`, `python3` con `opencv-python-headless`, `numpy`, `Pillow`.
+Las de `vendor/` se instalan aparte y están listadas en `vendor/README.md`.
 Opcionales: `faster-whisper` (transcripción), `rembg` (recorte del sujeto). Sin ellas las
 herramientas lo dicen y proponen alternativa; no fallan en silencio.
 

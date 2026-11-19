@@ -28,9 +28,17 @@ Necesitas del usuario tres cosas. Si falta alguna, **pregunta**; no la inventes:
 - **tema y tesis** (la frase que el espectador debe repetir después)
 - **voz**: ¿hay audio grabado o hay que escribir para grabar?
 - **material propio**: ¿tiene A-roll rodado? ¿capturas de pantalla?
+- **referencia**: ¿imita el reel "2027" o trae otro vídeo que quiere replicar?
 
 Si no hay A-roll ni voz, la pieza no se puede montar: lo que se entrega es el guion y el
 plan de rodaje, y se dice claramente.
+
+**Si trae una referencia que no es "2027", desmóntala antes de empezar** con la skill
+`rea-video`: `rea-video decompose <vídeo> -o out/ref --lang es`. Sale plano a plano cómo se
+hizo, qué lleva encima, dónde caen los cortes y cómo suena. Eso es evidencia para escribir un
+preset nuevo, no un preset: los números se deciden y se escriben a mano en `presets/`, como se
+hizo con el de "2027". Mientras no exista ese preset, el estilo que manda sigue siendo el de
+`presets/estilo-2027.json`, y hay que decírselo al usuario.
 
 ### 1. Guion → `guion-y-captions`
 **Entra:** tema, tesis, duración objetivo.
@@ -87,6 +95,11 @@ Dos lo abaratan.
 Después del montaje, porque los SFX van clavados a transiciones que hasta ahora no
 existían.
 
+Para **elegir** entre varios candidatos de música o de efecto, no lo hagas de oído imaginado:
+`earshot` los describe y los puntúa contra lo que buscas, y devuelve el número. Si hay que
+construir la banda entera desde grabaciones con licencia, la skill `real-sound` lleva el
+proceso completo, comprobación de licencia incluida.
+
 ### 9. Ensamblaje y control → `render-y-qc`
 **Entra:** todo.
 **Sale:** el máster y un informe de desviaciones contra el preset.
@@ -110,6 +123,9 @@ No digas que está hecho sin haberlo comprobado. Pasa `render-y-qc` y revisa:
 - [ ] ¿Flash en negativo, 1–2 veces como mucho?
 - [ ] ¿La música sostiene sin competir con la voz?
 - [ ] ¿El cierre está en silencio?
+
+Las dos últimas son afirmaciones sobre cómo suena algo, y tú no lo has oído. Respáldalas con
+una lectura de `earshot` sobre el máster y cita el número, igual que se hace con el resto.
 
 Si algo falla, dilo con el dato. "El corte de 12.4 s cae en mitad de la palabra" vale;
 "quedó raro" no.
