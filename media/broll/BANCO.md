@@ -23,15 +23,28 @@ vuelve a bajar el mismo archivo.
 | ojo | — | *(del banco anterior)* | 15.6 s | "el criterio" |
 | pizarra | 10667202 | Business Team Collaborating on Strategy Using Whiteboard | 10.0 s | "qué problema resolver" |
 | blanco | 7283516 | Pen resting on a blank notebook, white table | 10.9 s | "se demuestra" — fondo blanco |
-| polvo | 3082473 | Morning sunshine in shutter crack, flying dust | 26.4 s | "cuando nadie te mira" |
+| sombras | 8412698 | Timelapse of golden hour sunlight caustics and window shadow | 5.6 s | "cuando nadie te mira" |
 | oficina | — | *(del banco anterior)* | 5.5 s | "la gente que vuelve" |
 | cuaderno | — | *(del banco anterior)* | 27.2 s | "pulir el currículum" |
 | cruce | 8806477 | Crowd of People Walking Across a Busy City Crosswalk | 8.0 s | "mostrar lo que decidís" |
 
-De reserva, bajados y graduados pero sin usar en esta pieza: `lluvia`
-(4498, piernas de una multitud bajo la lluvia en Nueva York), `libro` (10051037,
-macro de páginas pasando), `sombras` (8412698, sombras de ventana en time-lapse),
-`peatones` (92997, peatones desenfocados en Oxford), `multitud`.
+De reserva: `lluvia` (4498, piernas de una multitud bajo la lluvia en Nueva
+York), `libro` (10051037, macro de páginas pasando), `peatones` (92997,
+peatones desenfocados en Oxford), `polvo` (3082473, rendija de sol con polvo
+en suspensión), `multitud`.
+
+## Por qué `polvo` se quedó fuera
+
+Entró primero y se salía de banda: luma 25 sobre 160, casi negro, frente a los
+46-114 de los otros catorce planos. Se lee como un fallo de render, no como un
+plano. Barrido el clip entero en ventanas de medio segundo no tiene **ningún**
+tramo estable dentro de banda: es una entrada de sol, solo rampas (25 → 160 →
+22), y una rampa dentro de un plano de 1.5 s se lee como un fundido. `sombras`
+se queda plano en 88-91 de principio a fin.
+
+La comprobación que lo detectó —luma media de cada plano de b-roll tal y como
+se usa, con su `ss` y su duración— vale para cualquier pieza: un solo plano
+fuera de banda basta para que el montaje parezca roto.
 
 ## La regla que esto resuelve
 
