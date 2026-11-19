@@ -160,7 +160,9 @@
           "alto_pct": 11.0
         }
       ]
-    }
+    },
+    "una_sola_linea": "Las palabras comparten UNA linea en toda la pieza. Usar una altura sobre A-roll y otra sobre b-roll hace que salten y se lean como colocadas al azar. La linea del original es 0.505 porque su sujeto va en el tercio superior; con un primer plano que llena el cuadro hay que bajarla, pero sigue siendo UNA.",
+    "orden_de_lectura": "Dentro de un grupo las palabras fluyen de izquierda a derecha desde un margen fijo, como una linea de texto. La dispersion que se mide en el original son los huecos entre palabras, no posiciones al azar."
   },
   "paleta": {
     "texto_sobre_oscuro": "#FFFFFF",
@@ -231,7 +233,9 @@
         0.9,
         1.6
       ],
-      "nota_subtitulos": "Sobre la tarjeta NO se queman subtitulos: la tarjeta ya lleva su texto y se enciman."
+      "nota_subtitulos": "Sobre la tarjeta NO se queman subtitulos: la tarjeta ya lleva su texto y se enciman.",
+      "separacion_minima_s": 3.0,
+      "nota_ritmo": "Dos tarjetas seguidas quedan raras: la musica se detiene dos veces muy juntas. O una sola mas larga, o separadas al menos 3s."
     },
     "corte_seco": {
       "descripcion": "El 90% de las transiciones. Sin nada.",
@@ -284,6 +288,32 @@
     },
     "b_roll_con_movimiento_propio": {
       "regla": "El b-roll generado/stock ya trae dolly o drone (hasta -55% de recorrido). No se le anade zoom encima: se elige por su movimiento."
+    },
+    "entrada_suspendida": {
+      "descripcion": "El plano entra MOVIDO y DESENFOCADO y decelera hasta congelarse en el primer ~40%. Despues se queda quieto, y al final viene el zoom de la transicion. Un plano completo lleva las dos curvas: easeOut al entrar, easeIn al salir.",
+      "curva": "easeOut (rapido al entrar, frenando). Es lo CONTRARIO del punch de salida.",
+      "fraccion_de_entrada": 0.42,
+      "deriva_pct": 8.0,
+      "blur_inicial_sigma": 9.0,
+      "medido_en_referencia": [
+        {
+          "plano": 17,
+          "t": "12.48-13.55",
+          "dx_px": "-14 a -108, decelerando"
+        },
+        {
+          "plano": 19,
+          "t": "14.45-15.92",
+          "dy_px": "-1 a -33 en el primer 40%, luego CONGELADO (-32.9, -32.3, -32.4)",
+          "nitidez": "0.27 al entrar -> 0.96 a los 0.83s"
+        },
+        {
+          "plano": 20,
+          "t": "15.92-17.48",
+          "zoom": "-13.95%, frenando hasta parar en t=1.0"
+        }
+      ],
+      "nota": "Es lo que da la sensacion de imagen suspendida en el aire. Yo venia aplicando solo easeIn, que es la mitad del gesto."
     }
   },
   "pixel_crt": {

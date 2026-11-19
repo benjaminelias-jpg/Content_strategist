@@ -151,6 +151,52 @@ def ef_punch(src: str, dst: str, total_pct: float, reposo: float,
          "-pix_fmt", "yuv420p", "-c:a", "copy", dst], dry)
 
 
+def ef_suspendido(src: str, dst: str, *, deriva_pct: float = 9.0,
+                  entrada: float = 0.42, blur_max: float = 9.0,
+                  angulo: float = 180.0, dry: bool = False) -> None:
+    """Entrada 'suspendida en el aire': el plano entra movido y desenfocado,
+    DECELERA hasta congelarse, y ahi se queda.
+
+    Medido sobre el tramo del CEO de OpenAI en la referencia:
+
+      plano 17 (foto, 1.07s)  dx -14 -> -108 px, decelerando hasta parar
+      plano 19 (Altman, 1.47s) dy -1 -> -33 px en el primer 40%, luego
+                               CONGELADO (-32.9, -32.3, -32.4)
+      nitidez del 19: 0.27 al entrar -> 0.96 a los 0.83s
+
+    La curva es easeOut: rapido al entrar y frenando. Es lo contrario del
+    punch de salida, que es easeIn. Un plano completo lleva las dos: entra
+    asi y sale con el zoom de la transicion.
+    """
+    import math
+    info = probe(src)
+    dur = info["dur"]
+    t_ent = max(0.1, min(entrada * dur, 0.75))
+    # u va de 1 a 0 durante la entrada; easeOutQuart = 1-(1-x)^4 invertido
+    u = f"pow(max(0\\,1-t/{t_ent:.4f})\\,1)"
+    suav = f"pow({u}\\,3)"                       # queda casi parado al final
+    z = 1.0 + deriva_pct / 100.0
+    zoom = f"(1+{z - 1:.5f}*{suav})"
+    rad = math.radians(angulo)
+    dx = f"({math.cos(rad):.4f}*{deriva_pct / 100.0 * W:.1f}*{suav})"
+    dy = f"({math.sin(rad):.4f}*{deriva_pct / 100.0 * H:.1f}*{suav})"
+
+    n_ent = max(1, int(round(t_ent * FPS)))
+    pasos = []
+    for i in range(n_ent):
+        s = blur_max * ((1 - i / n_ent) ** 3)
+        if s >= 0.4:
+            pasos.append(f"gblur=sigma={s:.3f}:enable='eq(n,{i})'")
+    rampa = ("," + ",".join(pasos)) if pasos else ""
+
+    vf = (f"{_fit()},fps={FPS},"
+          f"scale=w='ceil(iw*{zoom}/2)*2':h='ceil(ih*{zoom}/2)*2':eval=frame,"
+          f"crop={W}:{H}:'(iw-{W})/2+{dx}':'(ih-{H})/2+{dy}'" + rampa)
+    run(["ffmpeg", "-y", "-i", src, "-vf", vf, "-t", f"{dur:.3f}",
+         "-r", str(FPS), "-c:v", "libx264", "-crf", "16", "-preset", "medium",
+         "-pix_fmt", "yuv420p", "-an", dst], dry)
+
+
 def ef_invert_flash(src: str, dst: str, at: float, frames: int = 6,
                     dry: bool = False) -> None:
     """Invierte el compuesto entero durante `frames` a partir del segundo `at`.
@@ -543,6 +589,12 @@ def main() -> None:
     s.add_argument("--pct", type=float, default=7.0)
     s.add_argument("--reposo", type=float, default=0.85)
 
+    s = sub.add_parser("suspendido"); s.add_argument("src"); s.add_argument("dst")
+    s.add_argument("--deriva", type=float, default=9.0)
+    s.add_argument("--entrada", type=float, default=0.42)
+    s.add_argument("--blur", type=float, default=9.0)
+    s.add_argument("--angulo", type=float, default=180.0)
+
     s = sub.add_parser("invert-flash"); s.add_argument("src"); s.add_argument("dst")
     s.add_argument("--at", type=float, required=True)
     s.add_argument("--frames", type=int, default=6)
@@ -584,6 +636,9 @@ def main() -> None:
     d = a.dry
     if a.cmd == "punch":
         ef_punch(a.src, a.dst, a.pct, a.reposo, dry=d)
+    elif a.cmd == "suspendido":
+        ef_suspendido(a.src, a.dst, deriva_pct=a.deriva, entrada=a.entrada,
+                      blur_max=a.blur, angulo=a.angulo, dry=d)
     elif a.cmd == "invert-flash":
         ef_invert_flash(a.src, a.dst, a.at, a.frames, dry=d)
     elif a.cmd == "whip":

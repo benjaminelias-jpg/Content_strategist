@@ -91,7 +91,15 @@ def construir(plan: list, tmp: pathlib.Path, verbose: bool = True) -> list[str]:
         # --- movimiento de plano -------------------------------------------
         mov = s.get("movimiento", "ninguno")
         trans = (s.get("transicion_salida") or {}).get("tipo", "seco")
-        if mov == "punch":
+        if mov == "suspendido":
+            nxt = tmp / f"s{i:03d}_susp.mp4"
+            reelfx.ef_suspendido(str(actual), str(nxt),
+                                 deriva_pct=s.get("deriva_pct", 9.0),
+                                 entrada=s.get("entrada", 0.42),
+                                 blur_max=s.get("blur_max", 9.0),
+                                 angulo=s.get("angulo", 180.0))
+            actual = nxt
+        elif mov == "punch":
             if trans == "zoomblur":
                 print(f"  plano {i}: punch IGNORADO, ya lleva zoomblur a la "
                       f"salida (el movimiento estaria duplicado)", file=sys.stderr)

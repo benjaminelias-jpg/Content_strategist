@@ -117,6 +117,10 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video")
     ap.add_argument("--json", help="vuelca el informe")
+    ap.add_argument("--captions", help="plan de subtitulos: con el, la rejilla "
+                                       "se audita EXACTA en vez de estimarla "
+                                       "por pixeles, que confunde manchas "
+                                       "brillantes de la imagen con texto")
     a = ap.parse_args()
 
     if not pathlib.Path(a.video).exists():
@@ -186,17 +190,35 @@ def main() -> None:
         f"convierte en tic)")
 
     # --- rejilla de subtitulos ---------------------------------------------
-    ys, xs = rejilla_subtitulos(a.video)
+    if a.captions:
+        cp = json.loads(pathlib.Path(a.captions).read_text(encoding="utf-8"))
+        ys = [c.get("y", PRESET["rejilla_subtitulos"]["linea_base_y"]) for c in cp]
+        xs = [c["x"] for c in cp]
+        exacto = True
+    else:
+        ys, xs = rejilla_subtitulos(a.video)
+        exacto = False
     g = PRESET["rejilla_subtitulos"]
     if len(ys) >= 20:
         my = float(np.median(ys))
         p10, p90 = float(np.percentile(xs, 10)), float(np.percentile(xs, 90))
         disp = p90 - p10
-        add(OK if abs(my - g["linea_base_y"]) < 0.08 else FALLO,
-            "linea de subtitulos",
-            f"mediana y={my:.3f} (objetivo {g['linea_base_y']}). "
-            + ("" if abs(my - g["linea_base_y"]) < 0.08 else
-               "Fuera de la banda central: parece lower-third o karaoke."))
+        # Lo que se audita es la COHERENCIA de la linea, no su valor absoluto.
+        # El 0.505 de la referencia sale de que su cara ocupa el tercio
+        # superior; con un primer plano que llena el cuadro, esa linea taparia
+        # la cara y hay que bajarla. Lo que delata un mal montaje es que las
+        # palabras no compartan linea, no que la linea este mas abajo.
+        q25, q75 = float(np.percentile(ys, 25)), float(np.percentile(ys, 75))
+        disp_y = q75 - q25
+        add(OK if disp_y < 0.22 else FALLO,
+            "coherencia de la linea",
+            f"mediana y={my:.3f}, rango intercuartil {disp_y:.3f}. "
+            + ("las palabras comparten linea" if disp_y < 0.22 else
+               "las palabras no comparten linea: se leen como colocadas al azar")
+            + f" (la referencia usa {g['linea_base_y']}, valida cuando el sujeto "
+              f"va en el tercio superior)"
+            + ("" if exacto else "  [estimado por pixeles: poco fiable, "
+                                 "pasa --captions para medirlo exacto]"))
         obj = g["x_dispersion"]["p90"] - g["x_dispersion"]["p10"]
         add(OK if disp > 0.30 else FALLO,
             "dispersion horizontal",
