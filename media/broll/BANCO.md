@@ -21,10 +21,10 @@ vuelve a bajar el mismo archivo.
 | cenital | 1842205 | Overhead View Of Graphic Designer Working At Computer At Night | 25.2 s | "quién escribe mejor" — **cenital cerrado** |
 | aereo | 2976667 | Top Down Aerial View of People Walking on Via Toledo, Naples | 13.3 s | "todos dicen lo mismo" — **cenital general** |
 | ojo | — | *(del banco anterior)* | 15.6 s | "el criterio" |
-| pizarra | 10667202 | Business Team Collaborating on Strategy Using Whiteboard | 10.0 s | "qué problema resolver" |
+| mano | 1105355 | Man's hand moves over a wall with long shadow from window | 12.0 s | "qué problema resolver" |
 | blanco | 7283516 | Pen resting on a blank notebook, white table | 10.9 s | "se demuestra" — fondo blanco |
 | sombras | 8412698 | Timelapse of golden hour sunlight caustics and window shadow | 5.6 s | "cuando nadie te mira" |
-| oficina | — | *(del banco anterior)* | 5.5 s | "la gente que vuelve" |
+| luz | 10438675 | Silhouetted pedestrians walking through bright beam of sunlight | 20.5 s | "la gente que vuelve" |
 | textura | 3473303 | Close-up of a stack of rolled up white paper | 7.0 s | sobre la palabra "papel" — **textura macro** |
 | torres | 7782604 | Low Angle View of Modern Skyscrapers and Glass Facades | 17.7 s | "los proyectos que terminás" — **contrapicado general** |
 | cruce | 8806477 | Crowd of People Walking Across a Busy City Crosswalk | 8.0 s | "mostrar lo que decidís" |
@@ -78,3 +78,40 @@ mas del 40 % de los huecos. Y audita el reparto A-roll / b-roll contra el 55/45
 del preset sobre el **tiempo de rodaje**, descontando tarjetas y cierre: anadir
 b-roll y tarjetas se come el A-roll sin que se note, y la pieza deja de ser
 alguien hablando.
+
+
+## Aesthetic, no catalogo
+
+Tres planos delataban la pieza como stock corporativo: el equipo en la pizarra,
+el senor en la oficina y los dos retratos de los motion graphics. El patron era
+siempre el mismo: **gente mirando a camara, escenario de negocio montado y luz
+plana**.
+
+El criterio para lo que entra: sujeto anonimo o parcial, luz dura y
+direccional, foco corto, textura. Lo que sale: sonrisa a camara, oficina
+luminosa, situacion escenificada.
+
+### Los retratos del parallax necesitan fondo
+
+Al cambiarlos cai en la trampa contraria. Los dos primeros candidatos
+"aesthetic" eran retratos low-key preciosos, pero el fondo medido daba **2.0 y
+14.8** de varianza: vacio. Y sin fondo no hay parallax, solo un zoom. Asi que
+antes de elegir un retrato se mide el detalle en el **borde del cuadro**, que es
+casi todo fondo: por debajo de ~40 no sirve.
+
+| retrato | separacion sujeto/fondo medida sobre el render |
+|---|---|
+| los de catalogo | 10-14x |
+| los que entraron (138 y 792 de detalle en el borde) | **83x y 33x** |
+
+### La media de luma era el criterio equivocado
+
+El clip de siluetas a contraluz da **media 24**, por debajo de la banda 46-114
+del resto, y lo iba a descartar. Medido el histograma, tiene **p95 = 206**: la
+alta mas brillante de todo el banco, con un recorrido de 206, igual que el
+bokeh (202) o el Macintosh (213). No esta subexpuesto, es una silueta de
+contraste alto y su media baja es justo el efecto.
+
+Lo que hay que medir no es la media sino **si el plano tiene altas** (p95 >=
+120): eso es lo que distingue un low-key de un plano embarrado. La media sola
+descarta precisamente el material mas aesthetic.
