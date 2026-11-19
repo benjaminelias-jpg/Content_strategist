@@ -358,40 +358,53 @@ def ef_motion_card(texto: str, dst: str, dur: float = 2.0, *,
          "-preset", "medium", dst], dry)
 
 
-def curva_suspendido(u: float) -> float:
+def curva_suspendido(u: float, dur: float = 1.47,
+                     total_pct: float = 8.9) -> float:
     """Curva de velocidad del motion graphic, medida en la referencia.
 
-    Sacada del plano de la entrevista (14.45-15.92s, 1.47s, +8.9% de zoom),
-    midiendo frame a frame. La curva real es MUCHO mas brusca de lo que
-    parece a ojo:
+    Del plano de la entrevista (14.45-15.92s, 1.47s, +8.9% de zoom), frame
+    a frame:
 
-        t/T 0.09 -> +2.77%   ya lleva el 31% del recorrido
+        t/T 0.09 -> +2.77%   tiron de entrada
         t/T 0.22 -> +2.97%
         t/T 0.48 -> +3.31%   clavado
         t/T 0.80 -> +3.31%   sigue clavado
         t/T 0.87 -> +4.88%
         t/T 0.93 -> +10.2%
 
-    Es decir: un tiron corto al entrar que coloca un tercio del recorrido,
-    una meseta de casi dos tercios del plano donde NO SE MUEVE, y el 63%
-    restante descargado en el ultimo 13%.
+    Devuelve el avance normalizado (0..1) sobre `total_pct`.
 
-    La primera version de esta funcion repartia el tiron en el 35% inicial
-    y llegaba al 25% del recorrido. Comparada con la medida, entraba lenta
-    y se movia durante la meseta. Es justo lo que delata una imitacion: la
-    meseta tiene que estar MUERTA.
+    DOS COSAS QUE NO ESCALAN, y que al escalarlas rompen el efecto:
+
+    1. EL TIRON DE ENTRADA ES ABSOLUTO. En la referencia vale +2.77%, que
+       sobre su +8.9% es el 31% del recorrido. Al subir el zoom a +22% para
+       un plano largo, mantener ese 31% daba un tiron de +6.6%: un salto
+       brutal al arrancar, y motion_probe lo clasificaba KEN BURNS porque
+       el 60% del recorrido ya estaba gastado al 70% del plano. El tiron y
+       la meseta se anclan en PUNTOS DE ZOOM, no en porcentaje: todo el
+       recorrido extra va a la descarga final, que es donde vive el
+       movimiento en este estilo.
+
+    2. LA MESETA SE MIDE EN SEGUNDOS. Su 70% dura 1s en un plano de 1.5s y
+       se lee como reposo; el mismo 70% en uno de 4s son 2.8s congelados y
+       un salto de medio segundo, que se lee como fallo. Asi que la meseta
+       conserva su duracion y lo que se estira es la descarga.
     """
-    if u < 0.10:
-        return 0.31 * (1 - (1 - u / 0.10) ** 3)      # tiron de entrada
-    if u < 0.40:
-        return 0.31 + 0.06 * (u - 0.10) / 0.30       # acaba de asentarse
-    if u < 0.80:
-        return 0.37                                  # meseta MUERTA
-    # Descarga: cuadratica que pasa por los dos puntos medidos (0.87 -> 0.55
-    # y 0.93 -> 1.00) y queda arriba. El zoom TERMINA en t/T=0.93, no en el
-    # ultimo frame: los tres ultimos frames ya estan quietos en su destino,
-    # y ese reposo es lo que hace que el corte golpee.
-    return 0.37 + 0.63 * min(1.0, (u - 0.80) / 0.13) ** 2
+    tiron = min(0.95, 2.77 / max(total_pct, 0.1))    # +2.77 puntos de zoom
+    meseta = min(0.97, 3.31 / max(total_pct, 0.1))   # +3.31 puntos de zoom
+    meseta = max(meseta, tiron + 0.01)
+
+    if dur > 2.2:
+        ent = 0.10 * 1.47 / dur
+        fin = 1.0 - max(0.30, 0.20 * 1.47 / dur)
+    else:
+        ent, fin = 0.10, 0.80
+
+    if u < ent:
+        return tiron * (1 - (1 - u / ent) ** 3)
+    if u < fin:
+        return tiron + (meseta - tiron) * (u - ent) / (fin - ent)
+    return meseta + (1 - meseta) * min(1.0, (u - fin) / (1 - fin) / 0.65) ** 2
 
 
 def _rotular(im, rotulo, u: float) -> None:
@@ -421,7 +434,8 @@ def _rotular(im, rotulo, u: float) -> None:
 def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
                 zoom_fondo_pct: float = 2.9, zoom_sujeto_pct: float = 8.9,
                 blur_min: float = 2.0, blur_max: float = 8.0,
-                base_sujeto_pct: float = 3.0, rotulo: tuple | None = None,
+                base_sujeto_pct: float = 3.0, amplio_pct: float = 0.0,
+                rotulo: tuple | None = None,
                 dry: bool = False) -> None:
     """Motion graphic 2.5D: sujeto recortado sobre su fondo difuminado.
 
@@ -465,12 +479,17 @@ def ef_parallax(fondo: str, sujeto: str, dst: str, dur: float = 1.2, *,
     try:
         for n in range(nf):
             u = n / (nf - 1)
-            pr = curva_suspendido(u)
-            bg = encuadrar(bg0, 1.0 + zoom_fondo_pct / 100 * pr)
+            pr = curva_suspendido(u, dur, zoom_sujeto_pct)
+            # `amplio_pct` abre el plano al empezar: con 0 el sujeto ya
+            # llena el cuadro desde el primer frame, que es lo que hacia
+            # antes. Con un valor >0 se arranca viendo la escena entera y
+            # el zoom tiene de donde venir.
+            ab = 1.0 - amplio_pct / 100 * (1 - pr)
+            bg = encuadrar(bg0, ab * (1.0 + zoom_fondo_pct / 100 * pr))
             bg = bg.filter(ImageFilter.GaussianBlur(
                 blur_min + (blur_max - blur_min) * pr))
-            sj = encuadrar(sj0, (1 + base_sujeto_pct / 100)
-                           + zoom_sujeto_pct / 100 * pr)
+            sj = encuadrar(sj0, ab * ((1 + base_sujeto_pct / 100)
+                                      + zoom_sujeto_pct / 100 * pr))
             bg.paste(sj, (0, 0), sj)
             if rotulo:
                 _rotular(bg, rotulo, n / (nf - 1))
