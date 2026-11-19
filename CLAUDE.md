@@ -101,10 +101,9 @@ Dos cosas medidas sobre lo que hay hoy:
 - **9 de 10 clips son 720×1280.** El lienzo del preset es 1080×1920, así que montarlos ahí es
   un escalado de 1.5× que ablanda la imagen. O se monta a 720×1280, o se reservan para planos
   cortos.
-- **La procedencia no está establecida.** Los nombres originales empiezan por `From
-  Klickpin.com`, un descargador de Pinterest, y varios clips parecen metraje de película. Eso
-  choca con la regla de abajo. Hasta que se resuelva, sirven como referencia de tono para
-  generar equivalentes con `presets/broll-prompts.json`, no como material de entrega.
+- **Licencia confirmada por el usuario** (19-11-2026) para los diez clips que había ese día.
+  No hay que volver a plantearlo. Si entran clips nuevos, esa confirmación **no se extiende
+  sola**: se pregunta una vez por la tanda nueva.
 
 ## El lienzo no es sagrado
 
@@ -117,7 +116,8 @@ verdad:
 REEL_LIENZO=1920x1080 python3 tools/assemble.py --plan plan/planos.json --salida out/master.mp4
 ```
 
-Pregunta el formato antes de montar. No lo des por hecho.
+Pregunta el formato antes de montar. No lo des por hecho. **El formato acordado con el usuario
+es vertical 1080×1920**, que es el del preset.
 
 ## Convenciones
 

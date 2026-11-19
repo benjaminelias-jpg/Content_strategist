@@ -87,10 +87,32 @@ no añade nada y quita un punto de rotura.
 
 ## Dos cosas que conviene arreglar algún día
 
-- `render_qc.py` contó **4 tarjetas blancas donde el plan tenía 2**, y una de 0.07 s. Está
-  marcando como tarjeta algún b-roll claro o un frame de transición. No invalida la auditoría
-  —el presupuesto sigue dentro— pero el número no es de fiar.
+- **Resuelto.** `render_qc.py` contaba 4 tarjetas blancas donde el plan tenía 2. Era el b-roll
+  de PNG claras disparando el detector: al rehacer el montaje con metraje real cuenta 2, que son
+  las que hay.
 - El `zoom acumulado` que mide `motion_probe.py` queda por debajo de lo ordenado (+3.9 % sobre
   un punch del 8 %). Es el seguimiento ORB: la mayoría de frames no se mueven y los últimos
   saltan mucho. **La clasificación es correcta**, que es para lo que sirve; la magnitud
   absoluta hay que leerla con reservas.
+
+
+## El umbral de corte estaba mal calibrado
+
+Sólo se vio al montar con metraje real. Dos montajes de la **misma estructura**, 13 cortes
+reales, uno con b-roll de imágenes fijas y otro con vídeo:
+
+| umbral | fijas | metraje |
+|---|---|---|
+| 0.25 ← el que había | 14 | **42** |
+| 0.35 | 13 | 29 |
+| **0.45** ← el nuevo | 12 | 14 |
+| 0.50 | 12 | 12 |
+| 0.60 | 12 | 9 |
+
+Con imágenes fijas cualquier umbral bajo vale: entre plano y plano cambia todo de golpe y dentro
+del plano no se mueve nada. Con metraje real **el movimiento interno del clip dispara el
+detector** y la cuenta se triplica. 0.45 es el único valor que aguanta los dos casos, los dos a
+un corte de la verdad. Es ajustable con `--umbral`.
+
+La lección va más allá del número: **una herramienta de medición validada sólo contra material
+sintético no está validada.** Esto no se podía ver hasta montar con vídeo de verdad.

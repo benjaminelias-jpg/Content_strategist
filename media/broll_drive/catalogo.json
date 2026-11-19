@@ -4,8 +4,7 @@
     "instruccion": "Carpeta de b-roll del usuario. Usarla siempre como primera fuente.",
     "sincronizar": "tools/broll_drive.sh"
   },
-  "aviso_licencia": "Los nombres originales empiezan por 'From Klickpin.com', que es un descargador de Pinterest, y al menos tres clips parecen metraje de pelicula. La procedencia y la licencia NO estan establecidas. El CLAUDE.md de este proyecto dice que material sin licencia no entra. Antes de publicar nada montado con esto hay que resolverlo: o el usuario confirma que tiene derechos, o se usan como referencia de tono para generar equivalentes con presets/broll-prompts.json.",
-  "nota_formato": "9 de 10 son 720x1280 (9:16). El lienzo del preset es 1080x1920, asi que subir de 720 a 1080 es un escalado de 1.5x y ablanda la imagen. Para evitarlo: montar a 720x1280 con REEL_LIENZO=720x1280, o reservar estos clips para planos cortos donde no se note.",
+  "nota_formato": "El usuario monta en 1080x1920. 9 de 10 clips son 720x1280, asi que suben 1.5x. Asumido y decidido: preferir estos clips para planos cortos, donde el ablandamiento no se lee.",
   "clips": [
     {
       "id": "1073756736193049442",
@@ -147,5 +146,10 @@
       "zoom_medido_pct": -0.07,
       "descripcion": "Hombre de abrigo largo de pie en un campo al atardecer. PARECE METRAJE DE PELICULA."
     }
-  ]
+  ],
+  "licencia": {
+    "estado": "confirmada por el usuario",
+    "fecha": "2026-11-19",
+    "nota": "El usuario confirmo tener los derechos de uso de este material. No hace falta volver a plantearlo. Si entran clips NUEVOS a la carpeta, la confirmacion no se extiende sola a ellos: preguntar una vez por la tanda nueva."
+  }
 }
